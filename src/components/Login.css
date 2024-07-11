@@ -1,0 +1,92 @@
+body, html {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+}
+
+.container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  width: 100%;
+  background: linear-gradient(to bottom right, indigo, purple);
+}
+
+.card {
+  width: 90%;
+  max-width: 400px;
+  padding: 20px;
+  border-radius: 10px;
+  background-color: #ffffff;
+  box-shadow: 0px 0px 20px 0px rgba(0, 0, 0, 0.1);
+  transform: translateY(-10px);
+  transition: transform 0.3s ease;
+  z-index: 10;
+}
+
+.card:hover {
+  transform: translateY(0px);
+  box-shadow: 0px 10px 30px 0px rgba(0, 0, 0, 0.2);
+}
+
+.switch {
+  text-decoration: none;
+  color: indigo;
+  cursor: pointer;
+  display: block;
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.signup-text {
+  color: purple;
+}
+
+.inputBox {
+  position: relative;
+  margin-bottom: 20px;
+}
+
+input[type="text"],
+input[type="password"] {
+  width: 100%;
+  padding: 10px 0;
+  border: none;
+  border-bottom: 2px solid #ccc;
+  outline: none;
+  font-size: 16px;
+  color: #333;
+  background: transparent;
+}
+
+input[type="text"]:focus,
+input[type="password"]:focus {
+  border-bottom: 2px solid purple;
+}
+
+.enter {
+  width: 100%;
+  padding: 10px 20px;
+  border: none;
+  outline: none;
+  cursor: pointer;
+  border-radius: 5px;
+  transition: background 0.3s ease;
+}
+
+.enter.bg-blue-500 {
+  background-color: blue;
+}
+
+.enter.bg-purple-500 {
+  background-color: purple;
+}
+
+.enter:hover {
+  background-color: #333;
+}
+
+.relative {
+  position: relative;
+}

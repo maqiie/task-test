@@ -1,0 +1,34 @@
+.invitations-container {
+    margin: 20px;
+    padding: 20px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+  }
+  
+  .invitation-card {
+    margin-bottom: 20px;
+    padding: 10px;
+    border: 1px solid #eee;
+    border-radius: 5px;
+  }
+  
+  .sender-details {
+    margin-bottom: 10px;
+  }
+  
+  .task-details {
+    margin-bottom: 10px;
+  }
+  
+  .action-buttons button {
+    margin-right: 10px;
+  }
+  
+  .toast-notification {
+    padding: 10px;
+    border: 1px solid #eee;
+    border-radius: 5px;
+    background-color: #f0f0f0;
+    margin-bottom: 10px;
+  }
+  

@@ -1,0 +1,157 @@
+
+.create-task-container {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 20px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  background-color: #f9f9f9;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  transition: box-shadow 0.3s ease;
+}
+
+.create-task-container:hover {
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+}
+
+.create-task-container h2 {
+  text-align: center;
+  margin-bottom: 20px;
+  color: #333;
+}
+
+.create-task-container form {
+  display: flex;
+  flex-direction: column;
+}
+
+.create-task-container form div {
+  margin-bottom: 15px;
+}
+
+.create-task-container label {
+  font-weight: bold;
+  margin-bottom: 5px;
+  display: block;
+}
+
+.create-task-container input[type="text"],
+.create-task-container input[type="date"],
+.create-task-container input[type="time"],
+.create-task-container select,
+.create-task-container textarea {
+  width: 100%;
+  padding: 10px;
+  box-sizing: border-box;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.create-task-container input[type="text"]:focus,
+.create-task-container input[type="date"]:focus,
+.create-task-container input[type="time"]:focus,
+.create-task-container select:focus,
+.create-task-container textarea:focus {
+  border-color: #80bdff;
+  box-shadow: 0 0 5px rgba(128, 189, 255, 0.5);
+  outline: none;
+}
+
+.create-task-container textarea {
+  resize: vertical;
+}
+
+.create-task-container button {
+  padding: 10px 15px;
+  background-color: #28a745;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.create-task-container button:hover:not([disabled]) {
+  background-color: #218838;
+}
+
+.create-task-container button[disabled] {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+.create-task-container .error {
+  color: red;
+  margin-bottom: 20px;
+}
+
+.create-task-container .success {
+  color: green;
+  margin-bottom: 20px;
+}
+
+.create-task-container .conflict {
+  background-color: #ffe0e0;
+  border: 1px solid #ff0000;
+  padding: 10px;
+  margin-top: 20px;
+  border-radius: 4px;
+}
+
+.create-task-container .filtered-users-list,
+.create-task-container .selected-users-list {
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
+}
+
+.create-task-container .filtered-users-list li,
+.create-task-container .selected-users-list li {
+  padding: 10px;
+  background-color: #fff;
+  border: 1px solid #ccc;
+  margin-top: 5px;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: background-color 0.3s ease;
+}
+
+.create-task-container .filtered-users-list li:hover,
+.create-task-container .selected-users-list li:hover {
+  background-color: #f0f0f0;
+}
+
+.create-task-container .selected-user-item button {
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  padding: 5px 10px;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: background-color 0.3s ease;
+}
+
+.create-task-container .selected-user-item button:hover {
+  background-color: #c82333;
+}
+
+@media (max-width: 768px) {
+  .create-task-container {
+    padding: 15px;
+  }
+  
+  .create-task-container input[type="text"],
+  .create-task-container input[type="date"],
+  .create-task-container input[type="time"],
+  .create-task-container select,
+  .create-task-container textarea {
+    padding: 8px;
+  }
+
+  .create-task-container button {
+    padding: 8px 12px;
+  }
+}

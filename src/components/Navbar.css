@@ -1,0 +1,88 @@
+.navbar-container {
+  position: fixed;
+  bottom: 1rem;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  justify-content: space-around;
+  background-color: #2563eb; /* Blue-600 */
+  width: 90%;
+  border-radius: 1.5rem;
+  padding: 0.5rem 1rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+}
+
+.navbar-icon {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  font-size: 0.875rem; /* text-xs */
+  font-weight: 500; /* font-medium */
+  padding: 0.75rem 1rem;
+  text-decoration: none;
+  color: white;
+  position: relative;
+  transition: transform 0.2s ease-in-out;
+}
+
+.navbar-icon:hover {
+  transform: scale(1.1);
+}
+
+.icon {
+  width: 1.75rem; /* w-7 */
+  height: 1.75rem; /* h-7 */
+}
+
+.tooltip {
+  position: absolute;
+  bottom: calc(100% + 0.5rem);
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 0.5rem;
+  background-color: rgba(0, 0, 0, 0.75);
+  color: white;
+  font-size: 0.75rem; /* text-xs */
+  border-radius: 0.25rem;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease-in-out;
+}
+
+.tooltip:before {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 0.25rem;
+  border-style: solid;
+  border-color: rgba(0, 0, 0, 0.75) transparent transparent transparent;
+}
+
+.navbar-icon:hover .tooltip,
+.navbar-icon[data-tooltip-shown="true"] .tooltip {
+  opacity: 1;
+}
+
+.badge-container {
+  position: absolute;
+  top: -0.25rem;
+  right: -0.25rem;
+}
+
+.badge {
+  background-color: #ef4444; /* Red-500 */
+  color: white;
+  font-size: 0.75rem; /* text-xs */
+  font-weight: 700; /* font-bold */
+  padding: 0.25rem 0.5rem;
+  border-radius: 9999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.25rem;
+  height: 1.25rem;
+  line-height: 1rem;
+}
