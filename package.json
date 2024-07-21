@@ -6,6 +6,7 @@
     "@capacitor/android": "^6.1.1",
     "@capacitor/core": "^6.1.1",
     "@capacitor/ios": "^6.1.1",
+    "@fortawesome/fontawesome-svg-core": "^6.6.0",
     "@fortawesome/free-solid-svg-icons": "^6.5.2",
     "@fortawesome/react-fontawesome": "^0.2.2",
     "@headlessui/react": "^2.0.4",
