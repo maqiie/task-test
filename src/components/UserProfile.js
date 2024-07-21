@@ -4,7 +4,7 @@
 // import { ToastContainer, toast } from "react-toastify";
 // import "react-toastify/dist/ReactToastify.css";
 
-// const apiBaseUrl = "http://localhost:3001";
+// const apiBaseUrl = "https://tasked-f9aa59675043.herkuapp.com";
 // const defaultImage = "/placeholder.png"; // Update with your default image URL
 
 // const UserProfile = ({ userData, onLogout }) => {
@@ -17,7 +17,7 @@
 //     uid: userData?.uid || "",
 //     image: null,
 //     image_url: userData?.image_url
-//       ? `http://localhost:3001${userData.image_url}`
+//       ? `https://tasked-f9aa59675043.herkuapp.com${userData.image_url}`
 //       : defaultImage,
 //   });
 
@@ -423,7 +423,7 @@ import { motion } from "framer-motion";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
-const apiBaseUrl = "http://localhost:3001";
+const apiBaseUrl = "https://tasked-f9aa59675043.herkuapp.com";
 const defaultImage = "/placeholder.png";
 
 const UserProfile = ({ userData, onLogout }) => {
@@ -436,7 +436,7 @@ const UserProfile = ({ userData, onLogout }) => {
     uid: userData?.uid || "",
     image: null,
     image_url: userData?.image_url
-      ? `http://localhost:3001${userData.image_url}`
+      ? `https://tasked-f9aa59675043.herkuapp.com${userData.image_url}`
       : defaultImage,
   });
 

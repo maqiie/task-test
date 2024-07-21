@@ -42,7 +42,7 @@
 //         try {
 //           console.log("Fetching user data...");
 //           const response = await axios.get(
-//             "http://localhost:3001/auth/validate_token",
+//             "https://tasked-f9aa59675043.herkuapp.com/auth/validate_token",
 //             {
 //               headers: {
 //                 Authorization: `Bearer ${storedToken}`
@@ -68,7 +68,7 @@
 //     const fetchInvitations = async () => {
 //       try {
 //         const authToken = localStorage.getItem("authToken");
-//         const response = await axios.get("http://localhost:3001/invitations", {
+//         const response = await axios.get("https://tasked-f9aa59675043.herkuapp.com/invitations", {
 //           headers: { Authorization: `Bearer ${authToken}` },
 //         });
 //         setInvitations(response.data);
@@ -156,7 +156,7 @@
 //       if (isLoggedIn) {
 //         try {
 //           const response = await axios.get(
-//             "http://localhost:3001/auth/validate_token",
+//             "https://tasked-f9aa59675043.herkuapp.com/auth/validate_token",
 //             {
 //               headers: {
 //                 Authorization: `Bearer ${storedToken}`
@@ -182,7 +182,7 @@
 //     const fetchInvitations = async () => {
 //       try {
 //         const authToken = localStorage.getItem("authToken");
-//         const response = await axios.get("http://localhost:3001/invitations", {
+//         const response = await axios.get("https://tasked-f9aa59675043.herkuapp.com/invitations", {
 //           headers: { Authorization: `Bearer ${authToken}` },
 //         });
 //         setInvitations(response.data);
@@ -272,7 +272,7 @@
 //       if (isLoggedIn) {
 //         try {
 //           const response = await axios.get(
-//             "http://localhost:3001/auth/validate_token",
+//             "https://tasked-f9aa59675043.herkuapp.com/auth/validate_token",
 //             {
 //               headers: {
 //                 Authorization: `Bearer ${storedToken}`
@@ -299,7 +299,7 @@
 //     const fetchInvitations = async () => {
 //       try {
 //         const authToken = localStorage.getItem("authToken");
-//         const response = await axios.get("http://localhost:3001/invitations", {
+//         const response = await axios.get("https://tasked-f9aa59675043.herkuapp.com/invitations", {
 //           headers: { Authorization: `Bearer ${authToken}` },
 //         });
 //         setInvitations(response.data);
@@ -393,7 +393,7 @@ function App() {
       if (isLoggedIn) {
         try {
           const response = await axios.get(
-            "http://localhost:3001/auth/validate_token",
+            "https://tasked-f9aa59675043.herkuapp.com/auth/validate_token",
             {
               headers: {
                 Authorization: `Bearer ${storedToken}`
@@ -420,7 +420,7 @@ function App() {
     const fetchInvitations = async () => {
       try {
         const authToken = localStorage.getItem("authToken");
-        const response = await axios.get("http://localhost:3001/invitations", {
+        const response = await axios.get("https://tasked-f9aa59675043.herkuapp.com/invitations", {
           headers: { Authorization: `Bearer ${authToken}` },
         });
         setInvitations(response.data);

@@ -21,7 +21,7 @@ class Task extends Component {
   fetchTasks = async () => {
     try {
       const authToken = localStorage.getItem("authToken");
-      const response = await axios.get("http://localhost:3001/reminders", {
+      const response = await axios.get("https://tasked-f9aa59675043.herkuapp.com/reminders", {
         headers: {
           Authorization: `Bearer ${authToken}`,
           Accept: "application/json",
@@ -76,7 +76,7 @@ class Task extends Component {
 
     try {
       await axios.put(
-        `http://localhost:3001/reminders/${updatedTask.id}`,
+        `https://tasked-f9aa59675043.herkuapp.com/reminders/${updatedTask.id}`,
         { reminder: updatedTask },
         {
           headers: {
@@ -108,7 +108,7 @@ class Task extends Component {
     const { tasks, editedTask } = this.state;
     try {
       const authToken = localStorage.getItem("authToken");
-      await axios.delete(`http://localhost:3001/reminders/${editedTask.id}`, {
+      await axios.delete(`https://tasked-f9aa59675043.herkuapp.com/reminders/${editedTask.id}`, {
         headers: {
           Authorization: `Bearer ${authToken}`,
           Accept: "application/json",

@@ -1004,7 +1004,7 @@ const Navbar = ({ currentUser }) => {
       const fetchPendingInvitations = async () => {
         try {
           const authToken = localStorage.getItem("authToken");
-          const response = await axios.get("http://localhost:3001/invitations", {
+          const response = await axios.get("https://tasked-f9aa59675043.herkuapp.com/invitations", {
             headers: { Authorization: `Bearer ${authToken}` },
           });
           // Filter invitations to count pending ones

@@ -14,7 +14,7 @@ const Invitations = ({ currentUser }) => {
 
     const fetchInvitations = async () => {
       try {
-        const response = await axios.get("http://localhost:3001/invitations", {
+        const response = await axios.get("https://tasked-f9aa59675043.herkuapp.com/invitations", {
           headers: { Authorization: `Bearer ${authToken}` },
         });
         setInvitations(response.data);
