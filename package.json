@@ -19,6 +19,7 @@
     "actioncable": "^5.2.8",
     "axios": "^1.6.8",
     "date-fns": "^3.6.0",
+    "eslint-plugin-react-hooks": "^4.6.2",
     "feather-icons": "^4.29.2",
     "framer-motion": "^11.2.10",
     "lodash.debounce": "^4.0.8",
