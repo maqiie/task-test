@@ -54,7 +54,7 @@ const FriendSearch = () => {
     setIsSearching(true);
     try {
       const response = await fetch(
-        `https://tasked-f9aa59675043.herkuapp.com/users/search?email=${searchQuery}`,
+        `https://tasked-f9aa59675043.herokuapp.com/users/search?email=${searchQuery}`,
         {
           headers: {
             Authorization: `Bearer ${authToken}`,
@@ -73,7 +73,7 @@ const FriendSearch = () => {
   const fetchSentRequests = async (userId) => {
     try {
       const response = await fetch(
-        `https://tasked-f9aa59675043.herkuapp.com/friend_requests/${userId}/sent`,
+        `https://tasked-f9aa59675043.herokuapp.com/friend_requests/${userId}/sent`,
         {
           headers: {
             Authorization: `Bearer ${authToken}`,
@@ -91,7 +91,7 @@ const FriendSearch = () => {
   const fetchReceivedRequests = async (userId) => {
     try {
       const response = await fetch(
-        `https://tasked-f9aa59675043.herkuapp.com/friend_requests/${userId}/received`,
+        `https://tasked-f9aa59675043.herokuapp.com/friend_requests/${userId}/received`,
         {
           headers: {
             Authorization: `Bearer ${authToken}`,
@@ -110,7 +110,7 @@ const FriendSearch = () => {
   const fetchAcceptedRequests = async (userId) => {
     try {
       const response = await fetch(
-        `https://tasked-f9aa59675043.herkuapp.com/friend_requests/${userId}/accepted`,
+        `https://tasked-f9aa59675043.herokuapp.com/friend_requests/${userId}/accepted`,
         {
           headers: {
             Authorization: `Bearer ${authToken}`, // Make sure authToken is defined
@@ -129,7 +129,7 @@ const FriendSearch = () => {
   // const fetchAcceptedRequests = async (userId) => {
   //   try {
   //     const response = await fetch(
-  //       `https://tasked-f9aa59675043.herkuapp.com/friend_requests/${userId}/accepted`,
+  //       `https://tasked-f9aa59675043.herokuapp.com/friend_requests/${userId}/accepted`,
   //       {
   //         headers: {
   //           Authorization: `Bearer ${authToken}`, // Make sure authToken is defined
@@ -164,7 +164,7 @@ const FriendSearch = () => {
   const handleSendRequest = async () => {
     if (!selectedFriendId) return;
     try {
-      const response = await fetch("https://tasked-f9aa59675043.herkuapp.com/friend_requests", {
+      const response = await fetch("https://tasked-f9aa59675043.herokuapp.com/friend_requests", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -191,7 +191,7 @@ const FriendSearch = () => {
   const handleAcceptRequest = async (requestId) => {
     try {
       const response = await fetch(
-        `https://tasked-f9aa59675043.herkuapp.com/friend_requests/${requestId}/accept`,
+        `https://tasked-f9aa59675043.herokuapp.com/friend_requests/${requestId}/accept`,
         {
           method: "PUT",
           headers: {
@@ -218,7 +218,7 @@ const FriendSearch = () => {
   const handleDeclineRequest = async (requestId) => {
     try {
       const response = await fetch(
-        `https://tasked-f9aa59675043.herkuapp.com/friend_requests/${requestId}/decline`,
+        `https://tasked-f9aa59675043.herokuapp.com/friend_requests/${requestId}/decline`,
         {
           method: "PUT",
           headers: {

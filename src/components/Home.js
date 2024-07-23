@@ -42,7 +42,7 @@ const Home = ({ currentUser }) => {
   const fetchTasks = useCallback(async () => {
     const authToken = localStorage.getItem("authToken");
     try {
-      const response = await axios.get("https://tasked-f9aa59675043.herkuapp.com/reminders", {
+      const response = await axios.get("https://tasked-f9aa59675043.herokuapp.com/reminders", {
         headers: {
           Authorization: `Bearer ${authToken}`,
           Accept: "application/json",
@@ -65,7 +65,7 @@ const Home = ({ currentUser }) => {
   const fetchCompletedTasks = async () => {
     const authToken = localStorage.getItem("authToken");
     try {
-      const response = await axios.get("https://tasked-f9aa59675043.herkuapp.com/reminders", {
+      const response = await axios.get("https://tasked-f9aa59675043.herokuapp.com/reminders", {
         headers: {
           Authorization: `Bearer ${authToken}`,
           Accept: "application/json",
@@ -88,7 +88,7 @@ const Home = ({ currentUser }) => {
     const authToken = localStorage.getItem("authToken");
 
     try {
-      const response = await axios.get("https://tasked-f9aa59675043.herkuapp.com/reminders", {
+      const response = await axios.get("https://tasked-f9aa59675043.herokuapp.com/reminders", {
         headers: {
           Authorization: `Bearer ${authToken}`,
           Accept: "application/json",
@@ -244,7 +244,7 @@ const Home = ({ currentUser }) => {
     const authToken = localStorage.getItem("authToken");
     try {
       await axios.patch(
-        `https://tasked-f9aa59675043.herkuapp.com/reminders/${reminderId}/complete`,
+        `https://tasked-f9aa59675043.herokuapp.com/reminders/${reminderId}/complete`,
         { completed: true },
         {
           headers: {
@@ -299,7 +299,7 @@ const Home = ({ currentUser }) => {
     try {
       const authToken = localStorage.getItem("authToken");
 
-      await axios.delete(`https://tasked-f9aa59675043.herkuapp.com/reminders/${reminderId}`, {
+      await axios.delete(`https://tasked-f9aa59675043.herokuapp.com/reminders/${reminderId}`, {
         headers: {
           Authorization: `Bearer ${authToken}`,
           Accept: "application/json",

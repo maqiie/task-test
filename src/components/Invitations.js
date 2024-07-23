@@ -14,7 +14,7 @@ const Invitations = ({ currentUser }) => {
 
     const fetchInvitations = async () => {
       try {
-        const response = await axios.get("https://tasked-f9aa59675043.herkuapp.com/invitations", {
+        const response = await axios.get("https://tasked-f9aa59675043.herokuapp.com/invitations", {
           headers: { Authorization: `Bearer ${authToken}` },
         });
         setInvitations(response.data);
@@ -81,7 +81,7 @@ const Invitations = ({ currentUser }) => {
     const authToken = localStorage.getItem("authToken");
     try {
       await axios.post(
-        `http://localhost:3001/invitations/${invitationId}/${action}`,
+        `https://tasked-f9aa59675043.herokuapp.com/invitations/${invitationId}/${action}`,
         {},
         { headers: { Authorization: `Bearer ${authToken}` } }
       );

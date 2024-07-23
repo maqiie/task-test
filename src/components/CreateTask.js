@@ -34,7 +34,7 @@ const CreateTask = ({ userId }) => {
       try {
         const authToken = localStorage.getItem("authToken");
         const response = await axios.get(
-          `https://tasked-f9aa59675043.herkuapp.com/reminders?date=${dueDate}`,
+          `https://tasked-f9aa59675043.herokuapp.com/reminders?date=${dueDate}`,
           {
             headers: {
               Authorization: `Bearer ${authToken}`,
@@ -58,7 +58,7 @@ const CreateTask = ({ userId }) => {
       try {
         const authToken = localStorage.getItem("authToken");
         const response = await axios.get(
-          `https://tasked-f9aa59675043.herkuapp.com/friend_requests/${userId}/accepted`,
+          `https://tasked-f9aa59675043.herokuapp.com/friend_requests/${userId}/accepted`,
           {
             headers: {
               Authorization: `Bearer ${authToken}`,
@@ -129,7 +129,7 @@ const CreateTask = ({ userId }) => {
 
       // Send task creation request
       const response = await axios.post(
-        "https://tasked-f9aa59675043.herkuapp.com/reminders",
+        "https://tasked-f9aa59675043.herokuapp.com/reminders",
         taskPayload,
         {
           headers: {
