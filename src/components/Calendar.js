@@ -46,7 +46,7 @@ const Calendar = () => {
   
     try {
       const response = await axios.get(
-        `https://tasked-f9aa59675043.herokuapp.com/reminders/index_by_date?date=${date}`,
+        `https://task-test-backend.onrender.com/reminders/index_by_date?date=${date}`,
         {
           headers: {
             Authorization: `Bearer ${authToken}`,

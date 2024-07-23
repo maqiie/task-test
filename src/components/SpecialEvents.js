@@ -47,7 +47,7 @@ const SpecialEvents = ({ addSpecialEvent, setSpecialEvents }) => {
     const authToken = localStorage.getItem("authToken");
 
     try {
-      const response = await axios.get("https://tasked-f9aa59675043.herokuapp.com/reminders", {
+      const response = await axios.get("https://task-test-backend.onrender.com/reminders", {
         headers: {
           Authorization: `Bearer ${authToken}`,
           Accept: "application/json",
@@ -78,7 +78,7 @@ const SpecialEvents = ({ addSpecialEvent, setSpecialEvents }) => {
       // Make sure duration is not blank
       try {
         const response = await axios.post(
-          "https://tasked-f9aa59675043.herokuapp.com/reminders",
+          "https://task-test-backend.onrender.com/reminders",
           {
             reminder: {
               title: occasion,
