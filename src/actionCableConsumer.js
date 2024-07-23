@@ -20,7 +20,7 @@
 // export default cable;
 import { createConsumer } from "@rails/actioncable";
 
-const consumer = createConsumer("wss://task-test-backend.onrender.com/cable"); // Ensure this URL is correct
+const consumer = createConsumer("ws://task-test-backend.onrender.com/cable"); // Ensure this URL is correct
 
 export default consumer;
 
