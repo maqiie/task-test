@@ -444,7 +444,7 @@ function App() {
   };
 
   return (
-    <ActionCableProvider url="ws:https://task-test-backend.onrender.com/cable">
+    <ActionCableProvider url="wss:https://task-test-backend.onrender.com/cable">
       <Router>
         <Navbar currentUser={currentUser} onLogout={handleLogout} invitationsCount={invitationsCount} />
         <Notifications currentUser={currentUser} /> {/* Updated */}
