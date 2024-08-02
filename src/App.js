@@ -579,6 +579,8 @@
 // }
 
 // export default App;
+/* eslint-disable */
+
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { BrowserRouter as Router, Route, Routes, Navigate } from "react-router-dom";

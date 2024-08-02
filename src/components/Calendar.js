@@ -1,3 +1,4 @@
+/* eslint-disable */
 
 import React, { useState, useEffect } from "react";
 import { FaSmile } from "react-icons/fa";

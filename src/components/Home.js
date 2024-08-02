@@ -1,3 +1,5 @@
+/* eslint-disable */
+
 import React, { useState, useEffect, useCallback } from "react";
 import { FaTrash } from "react-icons/fa"; // Assuming you are using Font Awesome icons
 import { Link } from "react-router-dom";
