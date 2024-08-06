@@ -679,7 +679,7 @@ function App() {
             <Route path="/special" element={<SpecialEvents />} />
             <Route path="/profile" element={<UserProfile userData={currentUser} onLogout={handleLogout} />} />
             <Route path="/friend" element={<FriendSearch userData={currentUser} />} />
-            <Route path="/invitations" element={<Invitations userData={currentUser} />} />
+            <Route path="/invitations" element={<Invitations currentUser={currentUser} />} />
             <Route path="/loader" element={<Loader />} />
           </Routes>
         )}
