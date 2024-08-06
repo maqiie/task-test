@@ -1,27 +1,21 @@
-// actionCableConsumer.js
 
+// // export default cable;
 // import { createConsumer } from "@rails/actioncable";
 
-// const cable = createConsumer();
+// // Ensure the URL is correct and uses wss:// for secure connections
+// const consumer = createConsumer("wss://task-test-backend.onrender.com/cable");
 
-// cable.subscriptions.create("NotificationsChannel", {
-//   connected() {
-//     console.log("Connected to notifications channel.");
-//   },
-//   disconnected() {
-//     console.log("Disconnected from notifications channel.");
-//   },
-//   received(data) {
-//     console.log("Received data from notifications channel:", data);
-//     // Add logic to update your UI here
-//   }
-// });
+// export default consumer;
 
-// export default cable;
 import { createConsumer } from "@rails/actioncable";
 
-// Ensure the URL is correct and uses wss:// for secure connections
-const consumer = createConsumer("ws://task-test-backend.onrender.com/cable");
+// Determine the protocol to use for WebSocket connections
+const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
+// Use the appropriate host for your backend
+const backendHost = 'task-test-backend.onrender.com';
+// Construct the full WebSocket URL
+const cableUrl = `${protocol}://${backendHost}/cable`;
+
+const consumer = createConsumer(cableUrl);
 
 export default consumer;
-
