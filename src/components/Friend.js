@@ -257,7 +257,7 @@ const FriendSearch = () => {
     };
 
     return (
-      <div className="mt-6">
+      <div className="mt-6  flex flex-col">
         <h2 className="text-lg font-semibold mb-3 text-indigo-700">
           Sent Friend Requests
         </h2>
