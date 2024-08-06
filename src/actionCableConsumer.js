@@ -7,6 +7,7 @@
 
 // export default consumer;
 
+// actionCableConsumer.js
 import { createConsumer } from "@rails/actioncable";
 
 const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
@@ -14,4 +15,7 @@ const backendHost = 'task-test-backend.onrender.com';
 const cableUrl = `${protocol}://${backendHost}/cable`;
 
 const consumer = createConsumer(cableUrl);
+
+export default consumer;
+
 
