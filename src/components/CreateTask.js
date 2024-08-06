@@ -105,84 +105,18 @@ const CreateTask = ({ userId }) => {
     }
   }, 300);
   
-  // const handleSubmit = async (e) => {
-  //   e.preventDefault();
-  //   setIsLoading(true);
-  //   console.log("Setting loading state to true");
-
-  //   try {
-  //     // Prepare task payload
-  //     const authToken = localStorage.getItem("authToken");
-  //     const dueDateTime = `${dueDate}T${dueTime}:00`;
-  //     const dueDateTimeISO = new Date(dueDateTime).toISOString();
-  //     const taskDurationMinutes = getTaskDurationMinutes(duration);
-
-  //     const taskPayload = {
-  //       reminder: {
-  //         title: taskName,
-  //         due_date: dueDateTimeISO,
-  //         priority: priority,
-  //         location: location,
-  //         description: details,
-  //         duration: taskDurationMinutes,
-  //         user_ids: selectedUsers.map((user) => user.id), // Include selected user ids
-  //       },
-  //     };
-
-  //     // Send task creation request
-  //     const response = await axios.post(
-  //       "https://task-test-backend.onrender.com/reminders",
-  //       taskPayload,
-  //       {
-  //         headers: {
-  //           Authorization: `Bearer ${authToken}`,
-  //         },
-  //       }
-  //     );
-  //     console.log("API response:", response.data); // Log the API response data
-
-  //     // If users are selected, create invitations (if needed)
-
-  //     // Reset form fields and state after successful submission
-  //     setTaskName("");
-  //     setDueDate("");
-  //     setDueTime("");
-  //     setPriority("");
-  //     setLocation("");
-  //     setDetails("");
-  //     setDuration("");
-  //     setError(null);
-  //     setConflict(null);
-  //     setAlternativeTime(null);
-  //     setTasks([...tasks, response.data.reminder]); // Assuming tasks state is an array of reminders
-  //     setSuccessMessage("Task created successfully!");
-  //     setSelectedUsers([]);
-
-  //     // Clear success message after a delay
-  //     setTimeout(() => setSuccessMessage(null), 3000);
-  //   } catch (error) {
-  //     console.error("Error submitting task:", error);
-  //     if (error.response) {
-  //       console.error("Response data:", error.response.data);
-  //     }
-  //     setError("Error submitting task. Please try again.");
-  //   } finally {
-  //     setIsLoading(false);
-  //     console.log("Setting loading state to false");
-  //   }
-  // };
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
     console.log("Setting loading state to true");
-  
+
     try {
       // Prepare task payload
       const authToken = localStorage.getItem("authToken");
       const dueDateTime = `${dueDate}T${dueTime}:00`;
       const dueDateTimeISO = new Date(dueDateTime).toISOString();
       const taskDurationMinutes = getTaskDurationMinutes(duration);
-  
+
       const taskPayload = {
         reminder: {
           title: taskName,
@@ -194,7 +128,7 @@ const CreateTask = ({ userId }) => {
           user_ids: selectedUsers.map((user) => user.id), // Include selected user ids
         },
       };
-  
+
       // Send task creation request
       const response = await axios.post(
         "https://task-test-backend.onrender.com/reminders",
@@ -205,9 +139,10 @@ const CreateTask = ({ userId }) => {
           },
         }
       );
-      
       console.log("API response:", response.data); // Log the API response data
-  
+
+      // If users are selected, create invitations (if needed)
+
       // Reset form fields and state after successful submission
       setTaskName("");
       setDueDate("");
@@ -219,37 +154,24 @@ const CreateTask = ({ userId }) => {
       setError(null);
       setConflict(null);
       setAlternativeTime(null);
-      setTasks((prevTasks) => [...prevTasks, response.data.reminder]); // Update tasks state
+      setTasks([...tasks, response.data.reminder]); // Assuming tasks state is an array of reminders
       setSuccessMessage("Task created successfully!");
-  
+      setSelectedUsers([]);
+
       // Clear success message after a delay
       setTimeout(() => setSuccessMessage(null), 3000);
     } catch (error) {
       console.error("Error submitting task:", error);
-      
-      // Enhanced error handling
-      let errorMessage = "Error submitting task. Please try again.";
       if (error.response) {
-        // Server responded with a status other than 2xx
         console.error("Response data:", error.response.data);
-        if (error.response.data.error) {
-          errorMessage = `Server error: ${error.response.data.error}`;
-        }
-      } else if (error.request) {
-        // Request was made but no response received
-        console.error("Request data:", error.request);
-        errorMessage = "No response received from the server.";
-      } else {
-        // Something else happened in setting up the request
-        console.error("Error message:", error.message);
       }
-      
-      setError(errorMessage);
+      setError("Error submitting task. Please try again.");
     } finally {
       setIsLoading(false);
       console.log("Setting loading state to false");
     }
   };
+
   
 
   const getTaskDurationMinutes = (duration) => {
