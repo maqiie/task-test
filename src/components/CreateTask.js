@@ -105,91 +105,18 @@ const CreateTask = ({ userId }) => {
     }
   }, 300);
   
-  // const handleSubmit = async (e) => {
-  //   e.preventDefault();
-  //   setIsLoading(true);
-  //   console.log("Setting loading state to true");
-
-  //   try {
-  //     // Prepare task payload
-  //     const authToken = localStorage.getItem("authToken");
-  //     const dueDateTime = `${dueDate}T${dueTime}:00`;
-  //     const dueDateTimeISO = new Date(dueDateTime).toISOString();
-  //     const taskDurationMinutes = getTaskDurationMinutes(duration);
-
-  //     const taskPayload = {
-  //       reminder: {
-  //         title: taskName,
-  //         due_date: dueDateTimeISO,
-  //         priority: priority,
-  //         location: location,
-  //         description: details,
-  //         duration: taskDurationMinutes,
-  //         user_ids: selectedUsers.map((user) => user.id), // Include selected user ids
-  //       },
-  //     };
-
-  //     // Send task creation request
-  //     const response = await axios.post(
-  //       "https://task-test-backend.onrender.com/reminders",
-  //       taskPayload,
-  //       {
-  //         headers: {
-  //           Authorization: `Bearer ${authToken}`,
-  //         },
-  //       }
-  //     );
-  //     console.log("API response:", response.data); // Log the API response data
-
-  //     // If users are selected, create invitations (if needed)
-
-  //     // Reset form fields and state after successful submission
-  //     setTaskName("");
-  //     setDueDate("");
-  //     setDueTime("");
-  //     setPriority("");
-  //     setLocation("");
-  //     setDetails("");
-  //     setDuration("");
-  //     setError(null);
-  //     setConflict(null);
-  //     setAlternativeTime(null);
-  //     setTasks([...tasks, response.data.reminder]); // Assuming tasks state is an array of reminders
-  //     setSuccessMessage("Task created successfully!");
-  //     setSelectedUsers([]);
-
-  //     // Clear success message after a delay
-  //     setTimeout(() => setSuccessMessage(null), 3000);
-  //   } catch (error) {
-  //     console.error("Error submitting task:", error);
-  //     if (error.response) {
-  //       console.error("Response data:", error.response.data);
-  //     }
-  //     setError("Error submitting task. Please try again.");
-  //   } finally {
-  //     setIsLoading(false);
-  //     console.log("Setting loading state to false");
-  //   }
-  // };
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
     console.log("Setting loading state to true");
-  
+
     try {
-      // Validate input fields
-      if (!taskName || !dueDate || !dueTime || !priority || !location || !details || !duration || selectedUsers.length === 0) {
-        setError("All fields are required.");
-        setIsLoading(false);
-        return;
-      }
-  
       // Prepare task payload
       const authToken = localStorage.getItem("authToken");
       const dueDateTime = `${dueDate}T${dueTime}:00`;
       const dueDateTimeISO = new Date(dueDateTime).toISOString();
       const taskDurationMinutes = getTaskDurationMinutes(duration);
-  
+
       const taskPayload = {
         reminder: {
           title: taskName,
@@ -201,9 +128,7 @@ const CreateTask = ({ userId }) => {
           user_ids: selectedUsers.map((user) => user.id), // Include selected user ids
         },
       };
-  
-      console.log("Task Payload:", taskPayload);
-  
+
       // Send task creation request
       const response = await axios.post(
         "https://task-test-backend.onrender.com/reminders",
@@ -214,9 +139,10 @@ const CreateTask = ({ userId }) => {
           },
         }
       );
-  
       console.log("API response:", response.data); // Log the API response data
-  
+
+      // If users are selected, create invitations (if needed)
+
       // Reset form fields and state after successful submission
       setTaskName("");
       setDueDate("");
@@ -231,26 +157,100 @@ const CreateTask = ({ userId }) => {
       setTasks([...tasks, response.data.reminder]); // Assuming tasks state is an array of reminders
       setSuccessMessage("Task created successfully!");
       setSelectedUsers([]);
-  
+
       // Clear success message after a delay
       setTimeout(() => setSuccessMessage(null), 3000);
     } catch (error) {
       console.error("Error submitting task:", error);
       if (error.response) {
         console.error("Response data:", error.response.data);
-        if (error.response.status === 422) {
-          setError("Unprocessable Entity: " + error.response.data.error);
-        } else {
-          setError("Error submitting task. Please try again.");
-        }
-      } else {
-        setError("Error submitting task. Please try again.");
       }
+      setError("Error submitting task. Please try again.");
     } finally {
       setIsLoading(false);
       console.log("Setting loading state to false");
     }
   };
+  // const handleSubmit = async (e) => {
+  //   e.preventDefault();
+  //   setIsLoading(true);
+  //   console.log("Setting loading state to true");
+  
+  //   try {
+  //     // Validate input fields
+  //     if (!taskName || !dueDate || !dueTime || !priority || !location || !details || !duration || selectedUsers.length === 0) {
+  //       setError("All fields are required.");
+  //       setIsLoading(false);
+  //       return;
+  //     }
+  
+  //     // Prepare task payload
+  //     const authToken = localStorage.getItem("authToken");
+  //     const dueDateTime = `${dueDate}T${dueTime}:00`;
+  //     const dueDateTimeISO = new Date(dueDateTime).toISOString();
+  //     const taskDurationMinutes = getTaskDurationMinutes(duration);
+  
+  //     const taskPayload = {
+  //       reminder: {
+  //         title: taskName,
+  //         due_date: dueDateTimeISO,
+  //         priority: priority,
+  //         location: location,
+  //         description: details,
+  //         duration: taskDurationMinutes,
+  //         user_ids: selectedUsers.map((user) => user.id), // Include selected user ids
+  //       },
+  //     };
+  
+  //     console.log("Task Payload:", taskPayload);
+  
+  //     // Send task creation request
+  //     const response = await axios.post(
+  //       "https://task-test-backend.onrender.com/reminders",
+  //       taskPayload,
+  //       {
+  //         headers: {
+  //           Authorization: `Bearer ${authToken}`,
+  //         },
+  //       }
+  //     );
+  
+  //     console.log("API response:", response.data); // Log the API response data
+  
+  //     // Reset form fields and state after successful submission
+  //     setTaskName("");
+  //     setDueDate("");
+  //     setDueTime("");
+  //     setPriority("");
+  //     setLocation("");
+  //     setDetails("");
+  //     setDuration("");
+  //     setError(null);
+  //     setConflict(null);
+  //     setAlternativeTime(null);
+  //     setTasks([...tasks, response.data.reminder]); // Assuming tasks state is an array of reminders
+  //     setSuccessMessage("Task created successfully!");
+  //     setSelectedUsers([]);
+  
+  //     // Clear success message after a delay
+  //     setTimeout(() => setSuccessMessage(null), 3000);
+  //   } catch (error) {
+  //     console.error("Error submitting task:", error);
+  //     if (error.response) {
+  //       console.error("Response data:", error.response.data);
+  //       if (error.response.status === 422) {
+  //         setError("Unprocessable Entity: " + error.response.data.error);
+  //       } else {
+  //         setError("Error submitting task. Please try again.");
+  //       }
+  //     } else {
+  //       setError("Error submitting task. Please try again.");
+  //     }
+  //   } finally {
+  //     setIsLoading(false);
+  //     console.log("Setting loading state to false");
+  //   }
+  // };
   
   
 
