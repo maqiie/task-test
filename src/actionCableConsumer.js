@@ -31,7 +31,6 @@
 
 // export default consumer;
 
-
 import { createConsumer } from "@rails/actioncable";
 
 const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
@@ -40,16 +39,16 @@ const cableUrl = `${protocol}://${backendHost}/cable`;
 
 const consumer = createConsumer(cableUrl);
 
-// Create a subscription with connection callbacks
-const subscription = consumer.subscriptions.create("YourChannel", {
+// Replace "NotificationsChannel" with the name of your channel
+const subscription = consumer.subscriptions.create("NotificationsChannel", {
   connected() {
-    console.log("Connected to ActionCable.");
+    console.log("Connected to NotificationsChannel.");
   },
   disconnected() {
-    console.warn("Disconnected from ActionCable.");
+    console.warn("Disconnected from NotificationsChannel.");
     // Attempt to reconnect
     setTimeout(() => {
-      consumer.subscriptions.create("YourChannel"); // Recreate subscription
+      consumer.subscriptions.create("NotificationsChannel"); // Recreate subscription
     }, 5000);
   },
   received(data) {
