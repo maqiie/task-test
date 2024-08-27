@@ -36,3 +36,34 @@
     transform: rotate(360deg);
   }
 }
+
+
+
+/* styles/Home.css */
+.home {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh; /* Ensure the home div takes full viewport height */
+}
+
+.content {
+  flex: 1; /* Allow this section to grow and push the footer down */
+}
+
+.notification-panel, .task-views, .widgets {
+  border: 1px solid #ddd;
+  padding: 15px;
+  border-radius: 5px;
+  margin-bottom: 20px; /* Add some spacing between sections */
+}
+
+.view-selector button {
+  margin-right: 10px;
+}
+
+.footer {
+  padding: 15px;
+  background-color: #f1f1f1;
+  text-align: center;
+  border-top: 1px solid #ddd;
+}

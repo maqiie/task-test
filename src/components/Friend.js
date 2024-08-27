@@ -1,11 +1,11 @@
 /* eslint-disable */
 
-
 import React, { useState, useEffect } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCheck, faTimes } from "@fortawesome/free-solid-svg-icons";
 import "./Friend.css";
 import { Transition } from "@headlessui/react";
+import apiClient from "../services/apiService";
 
 const FriendSearch = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -53,19 +53,33 @@ const FriendSearch = () => {
     return () => clearTimeout(timeout);
   }, [notifications]);
 
+  // const handleSearch = async () => {
+  //   setIsSearching(true);
+  //   try {
+  //     const response = await fetch(
+  //       `https://task-test-backend.onrender.com/users/search?email=${searchQuery}`,
+  //       {
+  //         headers: {
+  //           Authorization: `Bearer ${authToken}`,
+  //         },
+  //       }
+  //     );
+  //     const data = await response.json();
+  //     setSearchResults(Array.isArray(data) ? data : []);
+  //   } catch (error) {
+  //     console.error("Error searching for friends:", error);
+  //   } finally {
+  //     setIsSearching(false);
+  //   }
+  // };
   const handleSearch = async () => {
     setIsSearching(true);
     try {
-      const response = await fetch(
-        `https://task-test-backend.onrender.com/users/search?email=${searchQuery}`,
-        {
-          headers: {
-            Authorization: `Bearer ${authToken}`,
-          },
-        }
-      );
-      const data = await response.json();
-      setSearchResults(Array.isArray(data) ? data : []);
+      // Perform the API request using apiClient
+      const response = await apiClient.get(`/users/search`, {
+        params: { email: searchQuery },
+      });
+      setSearchResults(Array.isArray(response.data) ? response.data : []);
     } catch (error) {
       console.error("Error searching for friends:", error);
     } finally {
@@ -73,61 +87,42 @@ const FriendSearch = () => {
     }
   };
 
-  const fetchSentRequests = async (userId) => {
-    try {
-      const response = await fetch(
-        `https://task-test-backend.onrender.com/friend_requests/${userId}/sent`,
-        {
-          headers: {
-            Authorization: `Bearer ${authToken}`,
-          },
-        }
-      );
-      const data = await response.json();
-      setSentRequests(Array.isArray(data) ? data : []);
-    } catch (error) {
-      console.error("Error fetching sent requests:", error);
-      setSentRequests([]);
-    }
-  };
+  // const fetchSentRequests = async (userId) => {
+  //   try {
+  //     const response = await fetch(
+  //       `https://task-test-backend.onrender.com/friend_requests/${userId}/sent`,
+  //       {
+  //         headers: {
+  //           Authorization: `Bearer ${authToken}`,
+  //         },
+  //       }
+  //     );
+  //     const data = await response.json();
+  //     setSentRequests(Array.isArray(data) ? data : []);
+  //   } catch (error) {
+  //     console.error("Error fetching sent requests:", error);
+  //     setSentRequests([]);
+  //   }
+  // };
 
-  const fetchReceivedRequests = async (userId) => {
-    try {
-      const response = await fetch(
-        `https://task-test-backend.onrender.com/friend_requests/${userId}/received`,
-        {
-          headers: {
-            Authorization: `Bearer ${authToken}`,
-          },
-        }
-      );
-      const data = await response.json();
-      const pendingRequests = data.filter((request) => request.status === null);
-      setReceivedRequests(pendingRequests);
-    } catch (error) {
-      console.error("Error fetching received requests:", error);
-      setReceivedRequests([]);
-    }
-  };
-
-  const fetchAcceptedRequests = async (userId) => {
-    try {
-      const response = await fetch(
-        `https://task-test-backend.onrender.com/friend_requests/${userId}/accepted`,
-        {
-          headers: {
-            Authorization: `Bearer ${authToken}`, // Make sure authToken is defined
-          },
-        }
-      );
-      const data = await response.json();
-      console.log("Received data:", data); // Add this console log to see the data received
-      setAcceptedRequests(Array.isArray(data) ? data : []);
-    } catch (error) {
-      console.error("Error fetching accepted requests:", error);
-      setAcceptedRequests([]);
-    }
-  };
+  // const fetchReceivedRequests = async (userId) => {
+  //   try {
+  //     const response = await fetch(
+  //       `https://task-test-backend.onrender.com/friend_requests/${userId}/received`,
+  //       {
+  //         headers: {
+  //           Authorization: `Bearer ${authToken}`,
+  //         },
+  //       }
+  //     );
+  //     const data = await response.json();
+  //     const pendingRequests = data.filter((request) => request.status === null);
+  //     setReceivedRequests(pendingRequests);
+  //   } catch (error) {
+  //     console.error("Error fetching received requests:", error);
+  //     setReceivedRequests([]);
+  //   }
+  // };
 
   // const fetchAcceptedRequests = async (userId) => {
   //   try {
@@ -140,15 +135,48 @@ const FriendSearch = () => {
   //       }
   //     );
   //     const data = await response.json();
+  //     console.log("Received data:", data); // Add this console log to see the data received
   //     setAcceptedRequests(Array.isArray(data) ? data : []);
-
-  //     // Logging accepted users and their relationship categories
-  //     console.log("Accepted Requests:", data);
   //   } catch (error) {
   //     console.error("Error fetching accepted requests:", error);
   //     setAcceptedRequests([]);
   //   }
   // };
+  const fetchSentRequests = async (userId) => {
+    try {
+      // Use apiClient to make the GET request
+      const response = await apiClient.get(`/friend_requests/${userId}/sent`);
+      setSentRequests(Array.isArray(response.data) ? response.data : []);
+    } catch (error) {
+      console.error("Error fetching sent requests:", error);
+      setSentRequests([]);
+    }
+  };
+  
+  const fetchReceivedRequests = async (userId) => {
+    try {
+      // Use apiClient to make the GET request
+      const response = await apiClient.get(`/friend_requests/${userId}/received`);
+      const pendingRequests = response.data.filter((request) => request.status === null);
+      setReceivedRequests(pendingRequests);
+    } catch (error) {
+      console.error("Error fetching received requests:", error);
+      setReceivedRequests([]);
+    }
+  };
+  
+  const fetchAcceptedRequests = async (userId) => {
+    try {
+      // Use apiClient to make the GET request
+      const response = await apiClient.get(`/friend_requests/${userId}/accepted`);
+      console.log("Received data:", response.data); // Optional: log the received data
+      setAcceptedRequests(Array.isArray(response.data) ? response.data : []);
+    } catch (error) {
+      console.error("Error fetching accepted requests:", error);
+      setAcceptedRequests([]);
+    }
+  };
+
   useEffect(() => {
     fetchAcceptedRequests(userId);
   }, [userId]); // Fetch data whenever userId changes
@@ -164,21 +192,95 @@ const FriendSearch = () => {
     return sentRequests.some((request) => request.receiver_id === userId);
   };
 
+  // const handleSendRequest = async () => {
+  //   if (!selectedFriendId) return;
+  //   try {
+  //     const response = await fetch(
+  //       "https://task-test-backend.onrender.com/friend_requests",
+  //       {
+  //         method: "POST",
+  //         headers: {
+  //           "Content-Type": "application/json",
+  //           Authorization: `Bearer ${authToken}`,
+  //         },
+  //         body: JSON.stringify({
+  //           receiver_id: selectedFriendId,
+  //           relationship_category: relationshipCategory, // Use the selected relationship category
+  //         }),
+  //       }
+  //     );
+  //     if (response.ok) {
+  //       fetchSentRequests(userId);
+  //       setShowCategoryDropdown(false); // Hide dropdown after sending request
+  //       setSelectedFriendId(null); // Reset selected friend ID
+  //     } else {
+  //       console.error("Failed to send friend request:", response.statusText);
+  //     }
+  //   } catch (error) {
+  //     console.error("Error sending friend request:", error);
+  //   }
+  //   addNotification("Friend request sent!");
+  // };
+
+  // const handleAcceptRequest = async (requestId) => {
+  //   try {
+  //     const response = await fetch(
+  //       `https://task-test-backend.onrender.com/friend_requests/${requestId}/accept`,
+  //       {
+  //         method: "PUT",
+  //         headers: {
+  //           Authorization: `Bearer ${authToken}`,
+  //         },
+  //       }
+  //     );
+  //     if (response.ok) {
+  //       const acceptedRequest = receivedRequests.find(
+  //         (request) => request.id === requestId
+  //       );
+  //       setReceivedRequests(
+  //         receivedRequests.filter((request) => request.id !== requestId)
+  //       );
+  //       setAcceptedRequests([...acceptedRequests, acceptedRequest]);
+  //     } else {
+  //       console.error("Failed to accept friend request:", response.statusText);
+  //     }
+  //   } catch (error) {
+  //     console.error("Error accepting friend request:", error);
+  //   }
+  // };
+
+  // const handleDeclineRequest = async (requestId) => {
+  //   try {
+  //     const response = await fetch(
+  //       `https://task-test-backend.onrender.com/friend_requests/${requestId}/decline`,
+  //       {
+  //         method: "PUT",
+  //         headers: {
+  //           Authorization: `Bearer ${authToken}`,
+  //         },
+  //       }
+  //     );
+  //     if (response.ok) {
+  //       setReceivedRequests(
+  //         receivedRequests.filter((request) => request.id !== requestId)
+  //       );
+  //     } else {
+  //       console.error("Failed to decline friend request:", response.statusText);
+  //     }
+  //   } catch (error) {
+  //     console.error("Error declining friend request:", error);
+  //   }
+  //   addNotification("Friend request declined!");
+  // };
   const handleSendRequest = async () => {
     if (!selectedFriendId) return;
     try {
-      const response = await fetch("https://task-test-backend.onrender.com/friend_requests", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${authToken}`,
-        },
-        body: JSON.stringify({
-          receiver_id: selectedFriendId,
-          relationship_category: relationshipCategory, // Use the selected relationship category
-        }),
+      // Use apiClient to make the POST request
+      const response = await apiClient.post('/friend_requests', {
+        receiver_id: selectedFriendId,
+        relationship_category: relationshipCategory, // Use the selected relationship category
       });
-      if (response.ok) {
+      if (response.status === 200) { // Check if response is OK
         fetchSentRequests(userId);
         setShowCategoryDropdown(false); // Hide dropdown after sending request
         setSelectedFriendId(null); // Reset selected friend ID
@@ -190,19 +292,12 @@ const FriendSearch = () => {
     }
     addNotification("Friend request sent!");
   };
-
+  
   const handleAcceptRequest = async (requestId) => {
     try {
-      const response = await fetch(
-        `https://task-test-backend.onrender.com/friend_requests/${requestId}/accept`,
-        {
-          method: "PUT",
-          headers: {
-            Authorization: `Bearer ${authToken}`,
-          },
-        }
-      );
-      if (response.ok) {
+      // Use apiClient to make the PUT request
+      const response = await apiClient.put(`/friend_requests/${requestId}/accept`);
+      if (response.status === 200) { // Check if response is OK
         const acceptedRequest = receivedRequests.find(
           (request) => request.id === requestId
         );
@@ -217,19 +312,12 @@ const FriendSearch = () => {
       console.error("Error accepting friend request:", error);
     }
   };
-
+  
   const handleDeclineRequest = async (requestId) => {
     try {
-      const response = await fetch(
-        `https://task-test-backend.onrender.com/friend_requests/${requestId}/decline`,
-        {
-          method: "PUT",
-          headers: {
-            Authorization: `Bearer ${authToken}`,
-          },
-        }
-      );
-      if (response.ok) {
+      // Use apiClient to make the PUT request
+      const response = await apiClient.put(`/friend_requests/${requestId}/decline`);
+      if (response.status === 200) { // Check if response is OK
         setReceivedRequests(
           receivedRequests.filter((request) => request.id !== requestId)
         );
@@ -257,7 +345,7 @@ const FriendSearch = () => {
     };
 
     return (
-      <div className="mt-6  flex flex-col">
+      <div className=" h-screen  mt-6  flex flex-col">
         <h2 className="text-lg font-semibold mb-3 text-indigo-700">
           Sent Friend Requests
         </h2>

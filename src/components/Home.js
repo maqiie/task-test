@@ -8,8 +8,12 @@ import "react-calendar/dist/Calendar.css";
 import axios from "axios";
 import "./Home.css";
 import { useNavigate } from "react-router-dom";
-
+import apiClient from "../services/apiService";
 import { UserCircleIcon } from '@heroicons/react/outline'; // Importing the UserCircleIcon from Heroicons
+import { BellIcon } from '@heroicons/react/outline'; // or '@heroicons/react/20/solid' based on your style preference
+
+
+
 
 const Home = ({ currentUser }) => {
   const [selectedTask, setSelectedTask] = useState(null);
@@ -40,20 +44,48 @@ const Home = ({ currentUser }) => {
   const localCurrentDate = new Date(
     currentDate.getTime() - currentDate.getTimezoneOffset() * 60000
   ); // This converts the UTC time to local time
+  const [unreadMessages, setUnreadMessages] = useState(0);
+
+  // Fetch unread messages count
+  useEffect(() => {
+    const fetchUnreadMessages = async () => {
+      if (currentUser) {
+        try {
+          const response = await apiClient.get('/messages/unread-count');
+          setUnreadMessages(response.data.count); // Adjust based on your API response
+        } catch (error) {
+          console.error("Error fetching unread messages count:", error);
+        }
+      }
+    };
+
+    fetchUnreadMessages();
+  }, [currentUser]);
+  // const fetchTasks = useCallback(async () => {
+  //   const authToken = localStorage.getItem("authToken");
+  //   try {
+  //     const response = await axios.get("https://task-test-backend.onrender.com/reminders", {
+  //       headers: {
+  //         Authorization: `Bearer ${authToken}`,
+  //         Accept: "application/json",
+  //       },
+  //     });
+
+  //     // Filter out tasks where completed is true
+  //     const incompleteTasks = response.data.filter((task) => !task.completed);
+
+  //     // Update the state with incomplete tasks only
+  //     setTasks(incompleteTasks);
+  //   } catch (error) {
+  //     console.error("Error fetching tasks:", error);
+  //   }
+  // }, []);
 
   const fetchTasks = useCallback(async () => {
-    const authToken = localStorage.getItem("authToken");
     try {
-      const response = await axios.get("https://task-test-backend.onrender.com/reminders", {
-        headers: {
-          Authorization: `Bearer ${authToken}`,
-          Accept: "application/json",
-        },
-      });
-
+      const response = await apiClient.get("/reminders");
       // Filter out tasks where completed is true
       const incompleteTasks = response.data.filter((task) => !task.completed);
-
       // Update the state with incomplete tasks only
       setTasks(incompleteTasks);
     } catch (error) {
@@ -64,21 +96,36 @@ const Home = ({ currentUser }) => {
   useEffect(() => {
     fetchTasks();
   }, [fetchTasks]);
-  const fetchCompletedTasks = async () => {
-    const authToken = localStorage.getItem("authToken");
-    try {
-      const response = await axios.get("https://task-test-backend.onrender.com/reminders", {
-        headers: {
-          Authorization: `Bearer ${authToken}`,
-          Accept: "application/json",
-        },
-      });
 
+  // const fetchCompletedTasks = async () => {
+  //   const authToken = localStorage.getItem("authToken");
+  //   try {
+  //     const response = await axios.get("https://task-test-backend.onrender.com/reminders", {
+  //       headers: {
+  //         Authorization: `Bearer ${authToken}`,
+  //         Accept: "application/json",
+  //       },
+  //     });
+
+  //     // Filter out reminders where completed is true
+  //     const completedReminders = response.data.filter(
+  //       (reminder) => reminder.completed
+  //     );
+
+  //     return completedReminders;
+  //   } catch (error) {
+  //     console.error("Error fetching completed reminders:", error);
+  //     return []; // Return an empty array in case of error
+  //   }
+  // };
+
+  const fetchCompletedTasks = async () => {
+    try {
+      const response = await apiClient.get("/reminders");
       // Filter out reminders where completed is true
       const completedReminders = response.data.filter(
         (reminder) => reminder.completed
       );
-
       return completedReminders;
     } catch (error) {
       console.error("Error fetching completed reminders:", error);
@@ -86,31 +133,50 @@ const Home = ({ currentUser }) => {
     }
   };
 
+  // const fetchSpecialEvents = async () => {
+  //   const authToken = localStorage.getItem("authToken");
+
+  //   try {
+  //     const response = await axios.get("https://task-test-backend.onrender.com/reminders", {
+  //       headers: {
+  //         Authorization: `Bearer ${authToken}`,
+  //         Accept: "application/json",
+  //       },
+  //     });
+
+  //     // Filter special events from the response data
+  //     const specialEventsData = response.data.filter(
+  //       (event) => event.is_special_event
+  //     );
+
+  //     // Log the filtered special events data to verify
+  //     console.log("Special Events Data:", specialEventsData);
+
+  //     // Set the filtered special events in state
+  //     setSpecialEvents(specialEventsData);
+  //   } catch (error) {
+  //     console.error("Error fetching special events:", error);
+  //   }
+  // };
+  // useEffect(() => {
+  //   fetchSpecialEvents();
+  // }, []);
   const fetchSpecialEvents = async () => {
-    const authToken = localStorage.getItem("authToken");
-
     try {
-      const response = await axios.get("https://task-test-backend.onrender.com/reminders", {
-        headers: {
-          Authorization: `Bearer ${authToken}`,
-          Accept: "application/json",
-        },
-      });
-
+      const response = await apiClient.get("/reminders");
       // Filter special events from the response data
       const specialEventsData = response.data.filter(
         (event) => event.is_special_event
       );
-
       // Log the filtered special events data to verify
       console.log("Special Events Data:", specialEventsData);
-
       // Set the filtered special events in state
       setSpecialEvents(specialEventsData);
     } catch (error) {
       console.error("Error fetching special events:", error);
     }
   };
+
   useEffect(() => {
     fetchSpecialEvents();
   }, []);
@@ -242,25 +308,41 @@ const Home = ({ currentUser }) => {
     console.log("Time remaining for current task:", timeRemaining);
   }
 
-  const handleCompleteTask = async (reminderId) => {
-    const authToken = localStorage.getItem("authToken");
-    try {
-      await axios.patch(
-        `https://task-test-backend.onrender.com/reminders/${reminderId}/complete`,
-        { completed: true },
-        {
-          headers: {
-            Authorization: `Bearer ${authToken}`,
-            Accept: "application/json",
-          },
-        }
-      );
+  // const handleCompleteTask = async (reminderId) => {
+  //   const authToken = localStorage.getItem("authToken");
+  //   try {
+  //     await axios.patch(
+  //       `https://task-test-backend.onrender.com/reminders/${reminderId}/complete`,
+  //       { completed: true },
+  //       {
+  //         headers: {
+  //           Authorization: `Bearer ${authToken}`,
+  //           Accept: "application/json",
+  //         },
+  //       }
+  //     );
 
+  //     // Update the tasks state to remove the completed task
+  //     setTasks((updatedTasks) =>
+  //       updatedTasks.filter((task) => task.id !== reminderId)
+  //     );
+
+  //     // Update the current task and upcoming task if needed
+  //     updateTasks();
+  //   } catch (error) {
+  //     console.error("Error completing task:", error);
+  //   }
+  // };
+
+  const handleCompleteTask = async (reminderId) => {
+    try {
+      await apiClient.patch(`/reminders/${reminderId}/complete`, {
+        completed: true,
+      });
       // Update the tasks state to remove the completed task
       setTasks((updatedTasks) =>
         updatedTasks.filter((task) => task.id !== reminderId)
       );
-
       // Update the current task and upcoming task if needed
       updateTasks();
     } catch (error) {
@@ -297,20 +379,33 @@ const Home = ({ currentUser }) => {
   const handleClosePopup = () => {
     setShowPopup(false);
   };
+  // const handleDeleteClick = async (reminderId) => {
+  //   try {
+  //     const authToken = localStorage.getItem("authToken");
+
+  //     await axios.delete(`https://task-test-backend.onrender.com/reminders/${reminderId}`, {
+  //       headers: {
+  //         Authorization: `Bearer ${authToken}`,
+  //         Accept: "application/json",
+  //       },
+  //     });
+
+  //     // Update the tasks state to remove the deleted reminder
+  //     setTasks(tasks.filter((task) => task.id !== reminderId));
+
+  //     // Close the popup and clear the selected task
+  //     setShowPopup(false);
+  //     setSelectedTask(null);
+  //   } catch (error) {
+  //     console.error("Error deleting task:", error);
+  //   }
+  // };
+
   const handleDeleteClick = async (reminderId) => {
     try {
-      const authToken = localStorage.getItem("authToken");
-
-      await axios.delete(`https://task-test-backend.onrender.com/reminders/${reminderId}`, {
-        headers: {
-          Authorization: `Bearer ${authToken}`,
-          Accept: "application/json",
-        },
-      });
-
+      await apiClient.delete(`/reminders/${reminderId}`);
       // Update the tasks state to remove the deleted reminder
-      setTasks(tasks.filter((task) => task.id !== reminderId));
-
+      setTasks((tasks) => tasks.filter((task) => task.id !== reminderId));
       // Close the popup and clear the selected task
       setShowPopup(false);
       setSelectedTask(null);
@@ -335,23 +430,35 @@ const Home = ({ currentUser }) => {
     <div className="w-full px-4 py-8 bg-white rounded-lg shadow-lg mb-8">
 
 
-<nav className="fixed top-0 left-0 right-0 z-50 mb-2">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-end h-16 items-center">
-            <Link to="/profile" className="flex items-center">
-              {currentUser && currentUser.profilePicture ? (
-                <img
-                  src={currentUser.profilePicture}
-                  alt="User Profile"
-                  className="h-8 w-8 rounded-full object-cover"
-                />
-              ) : (
-                <UserCircleIcon className="h-8 w-8 text-gray-500 hover:text-gray-700 transition duration-150 ease-in-out transform hover:scale-110" />
-              )}
-            </Link>
-          </div>
-        </div>
-      </nav>
+<nav className="fixed top-0 left-0 right-0 z-50 mb-2 bg-white shadow-md">
+  <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="flex justify-end h-16 items-center space-x-4">
+      {/* Profile Picture */}
+      <Link to="/profile" className="flex items-center" aria-label="Profile">
+        {currentUser && currentUser.profilePicture ? (
+          <img
+            src={currentUser.profilePicture}
+            alt="User Profile"
+            className="h-8 w-8 rounded-full object-cover"
+          />
+        ) : (
+          <UserCircleIcon className="h-8 w-8 text-gray-500 hover:text-gray-700 transition duration-150 ease-in-out transform hover:scale-110 focus:outline-none" />
+        )}
+      </Link>
+
+      {/* Bell Icon with Unread Count */}
+      <Link to="/chat" className="relative flex items-center" aria-label="Chats">
+        <BellIcon className="h-8 w-8 text-gray-500 hover:text-gray-700 transition duration-150 ease-in-out transform hover:scale-110 focus:outline-none" />
+        {unreadMessages > 0 && (
+          <span className="absolute top-0 right-0 inline-flex items-center justify-center w-4 h-4 text-xs font-bold text-white bg-red-500 rounded-full">
+            {unreadMessages}
+          </span>
+        )}
+      </Link>
+    </div>
+  </div>
+</nav>
+
       <div className="w-full px-4 py-8 bg-white rounded-lg shadow-lg mb-8">
         {currentTask ? (
           <div className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg p-6 md:p-4 shadow-lg border border-gray-300 border-solid">

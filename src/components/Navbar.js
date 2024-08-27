@@ -1,9 +1,11 @@
+/* eslint-disable */
 
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import "./Navbar.css";
 import axios from "axios";
 import actionCableConsumer from "../actionCableConsumer";
+import apiClient from "../services/apiService";
 
 const Navbar = ({ currentUser }) => {
   const [tooltips, setTooltips] = useState({
@@ -23,17 +25,37 @@ const Navbar = ({ currentUser }) => {
     }));
   };
 
+  // useEffect(() => {
+  //   if (currentUser) {
+  //     const fetchPendingInvitations = async () => {
+  //       try {
+  //         const authToken = localStorage.getItem("authToken");
+  //         const response = await axios.get(
+  //           "https://task-test-backend.onrender.com/invitations",
+  //           {
+  //             headers: { Authorization: `Bearer ${authToken}` },
+  //           }
+  //         );
+  //         // Filter invitations to count pending ones
+  //         const pendingInvitations = response.data.filter(
+  //           (invitation) => invitation.status === "pending"
+  //         );
+  //         setPendingInvitationsCount(pendingInvitations.length);
+  //       } catch (error) {
+  //         console.error("Error fetching invitations:", error);
+  //       }
+  //     };
+
+  //     fetchPendingInvitations();
+  //   }
+  // }, [currentUser]);
   useEffect(() => {
     if (currentUser) {
       const fetchPendingInvitations = async () => {
         try {
-          const authToken = localStorage.getItem("authToken");
-          const response = await axios.get(
-            "https://task-test-backend.onrender.com/invitations",
-            {
-              headers: { Authorization: `Bearer ${authToken}` },
-            }
-          );
+          const response = await apiClient.get("/invitations", {
+            headers: { Authorization: `Bearer ${localStorage.getItem("authToken")}` },
+          });
           // Filter invitations to count pending ones
           const pendingInvitations = response.data.filter(
             (invitation) => invitation.status === "pending"

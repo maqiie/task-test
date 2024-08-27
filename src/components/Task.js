@@ -1,6 +1,9 @@
+/* eslint-disable */
+
 import React, { Component } from "react";
 import axios from "axios";
 import "./Task.css";
+import apiClient from "../services/apiService";
 
 class Task extends Component {
   constructor(props) {
@@ -18,10 +21,98 @@ class Task extends Component {
     this.fetchTasks();
   }
 
+  // fetchTasks = async () => {
+  //   try {
+  //     const authToken = localStorage.getItem("authToken");
+  //     const response = await axios.get(
+  //       "https://task-test-backend.onrender.com/reminders",
+  //       {
+  //         headers: {
+  //           Authorization: `Bearer ${authToken}`,
+  //           Accept: "application/json",
+  //         },
+  //       }
+  //     );
+  //     this.setState({ tasks: response.data });
+  //   } catch (error) {
+  //     console.error("Error fetching tasks:", error);
+  //   }
+  // };
+
+  // handleSearchChange = (event) => {
+  //   this.setState({ search: event.target.value });
+  // };
+
+  // handleDateSearch = (event) => {
+  //   const searchDate = new Date(event.target.value);
+  //   const formattedSearchDate = searchDate.toDateString();
+  //   this.setState({ search: formattedSearchDate });
+  // };
+
+  // handleTaskClick = (task) => {
+  //   this.setState({
+  //     activeTask: task,
+  //     editedTask: { ...task },
+  //     isPopupOpen: true,
+  //   });
+  // };
+
+  // handleClosePopup = () => {
+  //   this.setState({ isPopupOpen: false });
+  // };
+
+  // handleInputChange = (event, property) => {
+  //   const { editedTask } = this.state;
+  //   let value = event.target.value;
+
+  //   if (property === "timestamp") {
+  //     const selectedTime = new Date(value);
+  //     const offset = selectedTime.getTimezoneOffset() * 60000;
+  //     value = new Date(selectedTime.getTime() - offset);
+  //   }
+
+  //   this.setState({ editedTask: { ...editedTask, [property]: value } });
+  // };
+
+  // handleSaveChanges = async () => {
+  //   const { editedTask } = this.state;
+  //   const authToken = localStorage.getItem("authToken");
+  //   const currentTime = new Date().toISOString().slice(0, 16);
+  //   const updatedTask = { ...editedTask, timestamp: currentTime };
+
+  //   try {
+  //     await axios.put(
+  //       `https://task-test-backend.onrender.com/reminders/${updatedTask.id}`,
+  //       { reminder: updatedTask },
+  //       {
+  //         headers: {
+  //           Authorization: `Bearer ${authToken}`,
+  //           Accept: "application/json",
+  //           "Content-Type": "application/json",
+  //         },
+  //       }
+  //     );
+
+  //     const updatedTasks = this.state.tasks.map((task) =>
+  //       task.id === updatedTask.id ? { ...updatedTask } : task
+  //     );
+
+  //     this.setState({ tasks: updatedTasks, isPopupOpen: false });
+  //   } catch (error) {
+  //     if (error.response && error.response.status === 422) {
+  //       const errorMessage = Array.isArray(error.response.data.errors)
+  //         ? error.response.data.errors.join(", ")
+  //         : error.response.data.errors;
+  //       alert(`Error: ${errorMessage}`);
+  //     } else {
+  //       console.error("Error saving task:", error);
+  //     }
+  //   }
+  // };
   fetchTasks = async () => {
     try {
       const authToken = localStorage.getItem("authToken");
-      const response = await axios.get("https://task-test-backend.onrender.com/reminders", {
+      const response = await apiClient.get("/reminders", {
         headers: {
           Authorization: `Bearer ${authToken}`,
           Accept: "application/json",
@@ -32,51 +123,16 @@ class Task extends Component {
       console.error("Error fetching tasks:", error);
     }
   };
-
-  handleSearchChange = (event) => {
-    this.setState({ search: event.target.value });
-  };
-
-  handleDateSearch = (event) => {
-    const searchDate = new Date(event.target.value);
-    const formattedSearchDate = searchDate.toDateString();
-    this.setState({ search: formattedSearchDate });
-  };
-
-  handleTaskClick = (task) => {
-    this.setState({
-      activeTask: task,
-      editedTask: { ...task },
-      isPopupOpen: true,
-    });
-  };
-
-  handleClosePopup = () => {
-    this.setState({ isPopupOpen: false });
-  };
-
-  handleInputChange = (event, property) => {
-    const { editedTask } = this.state;
-    let value = event.target.value;
-
-    if (property === "timestamp") {
-      const selectedTime = new Date(value);
-      const offset = selectedTime.getTimezoneOffset() * 60000;
-      value = new Date(selectedTime.getTime() - offset);
-    }
-
-    this.setState({ editedTask: { ...editedTask, [property]: value } });
-  };
-
+  
   handleSaveChanges = async () => {
     const { editedTask } = this.state;
     const authToken = localStorage.getItem("authToken");
     const currentTime = new Date().toISOString().slice(0, 16);
     const updatedTask = { ...editedTask, timestamp: currentTime };
-
+  
     try {
-      await axios.put(
-        `https://task-test-backend.onrender.com/reminders/${updatedTask.id}`,
+      await apiClient.put(
+        `/reminders/${updatedTask.id}`,
         { reminder: updatedTask },
         {
           headers: {
@@ -86,11 +142,11 @@ class Task extends Component {
           },
         }
       );
-
+  
       const updatedTasks = this.state.tasks.map((task) =>
         task.id === updatedTask.id ? { ...updatedTask } : task
       );
-
+  
       this.setState({ tasks: updatedTasks, isPopupOpen: false });
     } catch (error) {
       if (error.response && error.response.status === 422) {
@@ -104,17 +160,38 @@ class Task extends Component {
     }
   };
 
+  // handleDeleteTask = async () => {
+  //   const { tasks, editedTask } = this.state;
+  //   try {
+  //     const authToken = localStorage.getItem("authToken");
+  //     await axios.delete(
+  //       `https://task-test-backend.onrender.com/reminders/${editedTask.id}`,
+  //       {
+  //         headers: {
+  //           Authorization: `Bearer ${authToken}`,
+  //           Accept: "application/json",
+  //         },
+  //       }
+  //     );
+
+  //     const updatedTasks = tasks.filter((task) => task.id !== editedTask.id);
+  //     this.setState({ tasks: updatedTasks, isPopupOpen: false });
+  //   } catch (error) {
+  //     console.error("Error deleting task:", error);
+  //   }
+  // };
+
   handleDeleteTask = async () => {
     const { tasks, editedTask } = this.state;
     try {
       const authToken = localStorage.getItem("authToken");
-      await axios.delete(`https://task-test-backend.onrender.com/reminders/${editedTask.id}`, {
+      await apiClient.delete(`/reminders/${editedTask.id}`, {
         headers: {
           Authorization: `Bearer ${authToken}`,
           Accept: "application/json",
         },
       });
-
+  
       const updatedTasks = tasks.filter((task) => task.id !== editedTask.id);
       this.setState({ tasks: updatedTasks, isPopupOpen: false });
     } catch (error) {
@@ -147,14 +224,13 @@ class Task extends Component {
         <h2 className="text-3xl font-bold bg-indigo-600 text-white py-4 text-center">
           Task
         </h2>
-        
-        <a href="/invitations">
-  <h2 class="text-3xl font-bold bg-indigo-600 text-white py-4 text-center">
-    Invitations
-  </h2>
-</a>
 
-        
+        <a href="/invitations">
+          <h2 class="text-3xl font-bold bg-indigo-600 text-white py-4 text-center">
+            Invitations
+          </h2>
+        </a>
+
         <div className="px-4 py-2">
           <input
             type="text"
