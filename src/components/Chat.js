@@ -6,7 +6,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import apiClient from '../services/apiService'; // Adjust path as needed
 import { createChatSubscription } from '../actionCableConsumer'; // Adjust path as needed
-import './Chat.css'; // Ensure Tailwind CSS is included
+// import './Chat.css'; // Ensure Tailwind CSS is included
 
 const Chat = ({ currentUser }) => {
   const [messages, setMessages] = useState([]);
@@ -300,3 +300,4 @@ const Chat = ({ currentUser }) => {
 };
 
 export default Chat;
+
