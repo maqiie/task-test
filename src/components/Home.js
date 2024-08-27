@@ -61,25 +61,7 @@ const Home = ({ currentUser }) => {
 
     fetchUnreadMessages();
   }, [currentUser]);
-  // const fetchTasks = useCallback(async () => {
-  //   const authToken = localStorage.getItem("authToken");
-  //   try {
-  //     const response = await axios.get("https://task-test-backend.onrender.com/reminders", {
-  //       headers: {
-  //         Authorization: `Bearer ${authToken}`,
-  //         Accept: "application/json",
-  //       },
-  //     });
-
-  //     // Filter out tasks where completed is true
-  //     const incompleteTasks = response.data.filter((task) => !task.completed);
-
-  //     // Update the state with incomplete tasks only
-  //     setTasks(incompleteTasks);
-  //   } catch (error) {
-  //     console.error("Error fetching tasks:", error);
-  //   }
-  // }, []);
+ 
 
   const fetchTasks = useCallback(async () => {
     try {
@@ -97,27 +79,7 @@ const Home = ({ currentUser }) => {
     fetchTasks();
   }, [fetchTasks]);
 
-  // const fetchCompletedTasks = async () => {
-  //   const authToken = localStorage.getItem("authToken");
-  //   try {
-  //     const response = await axios.get("https://task-test-backend.onrender.com/reminders", {
-  //       headers: {
-  //         Authorization: `Bearer ${authToken}`,
-  //         Accept: "application/json",
-  //       },
-  //     });
-
-  //     // Filter out reminders where completed is true
-  //     const completedReminders = response.data.filter(
-  //       (reminder) => reminder.completed
-  //     );
-
-  //     return completedReminders;
-  //   } catch (error) {
-  //     console.error("Error fetching completed reminders:", error);
-  //     return []; // Return an empty array in case of error
-  //   }
-  // };
+  
 
   const fetchCompletedTasks = async () => {
     try {
@@ -133,34 +95,7 @@ const Home = ({ currentUser }) => {
     }
   };
 
-  // const fetchSpecialEvents = async () => {
-  //   const authToken = localStorage.getItem("authToken");
-
-  //   try {
-  //     const response = await axios.get("https://task-test-backend.onrender.com/reminders", {
-  //       headers: {
-  //         Authorization: `Bearer ${authToken}`,
-  //         Accept: "application/json",
-  //       },
-  //     });
-
-  //     // Filter special events from the response data
-  //     const specialEventsData = response.data.filter(
-  //       (event) => event.is_special_event
-  //     );
-
-  //     // Log the filtered special events data to verify
-  //     console.log("Special Events Data:", specialEventsData);
-
-  //     // Set the filtered special events in state
-  //     setSpecialEvents(specialEventsData);
-  //   } catch (error) {
-  //     console.error("Error fetching special events:", error);
-  //   }
-  // };
-  // useEffect(() => {
-  //   fetchSpecialEvents();
-  // }, []);
+  
   const fetchSpecialEvents = async () => {
     try {
       const response = await apiClient.get("/reminders");
@@ -308,31 +243,7 @@ const Home = ({ currentUser }) => {
     console.log("Time remaining for current task:", timeRemaining);
   }
 
-  // const handleCompleteTask = async (reminderId) => {
-  //   const authToken = localStorage.getItem("authToken");
-  //   try {
-  //     await axios.patch(
-  //       `https://task-test-backend.onrender.com/reminders/${reminderId}/complete`,
-  //       { completed: true },
-  //       {
-  //         headers: {
-  //           Authorization: `Bearer ${authToken}`,
-  //           Accept: "application/json",
-  //         },
-  //       }
-  //     );
 
-  //     // Update the tasks state to remove the completed task
-  //     setTasks((updatedTasks) =>
-  //       updatedTasks.filter((task) => task.id !== reminderId)
-  //     );
-
-  //     // Update the current task and upcoming task if needed
-  //     updateTasks();
-  //   } catch (error) {
-  //     console.error("Error completing task:", error);
-  //   }
-  // };
 
   const handleCompleteTask = async (reminderId) => {
     try {
@@ -379,27 +290,7 @@ const Home = ({ currentUser }) => {
   const handleClosePopup = () => {
     setShowPopup(false);
   };
-  // const handleDeleteClick = async (reminderId) => {
-  //   try {
-  //     const authToken = localStorage.getItem("authToken");
 
-  //     await axios.delete(`https://task-test-backend.onrender.com/reminders/${reminderId}`, {
-  //       headers: {
-  //         Authorization: `Bearer ${authToken}`,
-  //         Accept: "application/json",
-  //       },
-  //     });
-
-  //     // Update the tasks state to remove the deleted reminder
-  //     setTasks(tasks.filter((task) => task.id !== reminderId));
-
-  //     // Close the popup and clear the selected task
-  //     setShowPopup(false);
-  //     setSelectedTask(null);
-  //   } catch (error) {
-  //     console.error("Error deleting task:", error);
-  //   }
-  // };
 
   const handleDeleteClick = async (reminderId) => {
     try {
@@ -691,16 +582,15 @@ const Home = ({ currentUser }) => {
             Calendar
           </h2>
           <div className="calendar-grid bg-gradient-to-r from-purple-600 to-indigo-600 rounded-lg p-4 shadow-md xl:w-3/4 mx-auto">
-            <Calendar
-              onChange={setSelectedDay}
-              value={selectedDay}
-              className="w-full border border-gray-200 xl:w-auto"
-              tileClassName={({ date, view }) =>
-                view === "month" && date.getDate() === selectedDay.getDate()
-                  ? "selected-day"
-                  : "normal-day"
-              }
-            />
+          <Calendar
+  className="bg-white rounded-lg shadow-md"
+  tileClassName="p-2 text-center"
+  next2Label={null}
+  prev2Label={null}
+  nextLabel={<span className="text-blue-500">→</span>}
+  prevLabel={<span className="text-blue-500">←</span>}
+/>
+
           </div>
 
           {tasks

@@ -1,13 +1,19 @@
-/* Tailwind CSS classes should cover most styling needs, but additional styles can be added if required */
-
-/* Example of styling for messages */
-.sent {
-    @apply bg-blue-500 text-white self-end;
+.message.sent {
+    background-color: #4a90e2;
+    color: white;
+    text-align: right;
+    margin-left: auto;
+    border-radius: 15px;
+    padding: 10px;
+    max-width: 60%;
   }
   
-  .received {
-    @apply bg-gray-300 text-black self-start;
+  .message.received {
+    background-color: #e0e0e0;
+    color: black;
+    text-align: left;
+    border-radius: 15px;
+    padding: 10px;
+    max-width: 60%;
   }
-  
-  /* Make sure to customize these styles to fit your design */
   
