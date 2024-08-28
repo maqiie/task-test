@@ -338,9 +338,11 @@ const Chat = ({ currentUser }) => {
     if (chatChannel) {
       chatChannel.unsubscribe();
     }
-
+  
     const newChatChannel = createChatSubscription(roomId, {
       received(data) {
+        console.log('Received data:', data); // Debugging line
+  
         if (data.message) {
           const isSentByCurrentUser = data.message.sender_id === currentUser.id;
           const formattedMessage = {
@@ -352,7 +354,7 @@ const Chat = ({ currentUser }) => {
             }),
           };
           setMessages((prevMessages) => [...prevMessages, formattedMessage]);
-
+  
           if (Notification.permission === 'granted') {
             new Notification('New message', { body: data.message.content });
           }
@@ -361,9 +363,10 @@ const Chat = ({ currentUser }) => {
         }
       }
     });
-
+  
     setChatChannel(newChatChannel);
   }, [chatChannel, currentUser.id]);
+  
 
   const handleFriendClick = async (friend) => {
     try {
@@ -389,13 +392,15 @@ const Chat = ({ currentUser }) => {
 
   useEffect(() => {
     if (!chatroomId) return;
-
+  
     const fetchMessages = async () => {
       setLoadingMessages(true);
       setError(null);
-
+  
       try {
         const response = await apiClient.get(`/chatrooms/${chatroomId}/messages`);
+        console.log('Fetched messages:', response.data); // Debugging line
+  
         const formattedMessages = response.data.map((msg) => ({
           ...msg,
           isSentByCurrentUser: msg.user_id === currentUser.id,
@@ -412,9 +417,11 @@ const Chat = ({ currentUser }) => {
         setLoadingMessages(false);
       }
     };
-
+  
     fetchMessages();
   }, [chatroomId, currentUser.id]);
+  
+  
 
   useEffect(() => {
     fetchAcceptedFriends();
@@ -542,34 +549,39 @@ const Chat = ({ currentUser }) => {
 
           {/* Messages Display */}
           <div className="flex-1 p-4 overflow-y-auto">
-            {loadingMessages ? (
-              <p className="text-center text-gray-400">Loading messages...</p>
-            ) : (
-              <div className="space-y-4">
-                {messages.map((message, index) => (
-                  <div
-                    key={index}
-                    className={`flex ${
-                      message.isSentByCurrentUser ? 'justify-end' : 'justify-start'
-                    }`}
-                  >
-                    <div
-                      className={`max-w-xs px-4 py-2 rounded-lg shadow ${
-                        message.isSentByCurrentUser
-                          ? 'bg-green-500 text-white'
-                          : 'bg-gray-200 text-gray-900'
-                      }`}
-                    >
-                      <p className="text-sm">{message.content}</p>
-                      <p className="text-xs text-right mt-1 opacity-75">
-                        {message.timestamp}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
+  {loadingMessages ? (
+    <p className="text-center text-gray-400">Loading messages...</p>
+  ) : (
+    <div className="space-y-4">
+      {messages.length > 0 ? (
+        messages.map((message, index) => (
+          <div
+            key={index}
+            className={`flex ${
+              message.isSentByCurrentUser ? 'justify-end' : 'justify-start'
+            }`}
+          >
+            <div
+              className={`${
+                message.isSentByCurrentUser
+                  ? 'bg-indigo-600 text-white'
+                  : 'bg-gray-200 text-gray-800'
+              } p-3 rounded-lg max-w-xs`}
+            >
+              <p>{message.content}</p>
+              <span className="text-xs text-gray-500 block mt-1">
+                {message.timestamp}
+              </span>
+            </div>
           </div>
+        ))
+      ) : (
+        <p className="text-center text-gray-400">No messages yet.</p>
+      )}
+    </div>
+  )}
+</div>
+
 
           {/* Message Input */}
           {chatroomId && (
