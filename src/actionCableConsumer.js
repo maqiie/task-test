@@ -108,7 +108,9 @@
 import { createConsumer } from "@rails/actioncable";
 
 const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
-const backendHost = 'localhost:3001'; // Adjust as needed
+// const backendHost = 'localhost:3001'; // Adjust as needed
+const backendHost = 'task-test-backend.onrender.com';
+
 const cableUrl = `${protocol}://${backendHost}/cable`;
 
 const consumer = createConsumer(cableUrl);
