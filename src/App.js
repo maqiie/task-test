@@ -76,7 +76,7 @@ function App() {
   };
 
   return (
-    <ActionCableProvider url="wss://localhost:3001/cable">
+    <ActionCableProvider url="wss://tasker-test.vercel.app/cable">
       <Router>
         <Navbar currentUser={currentUser} onLogout={handleLogout} invitationsCount={invitationsCount} />
         <Notifications currentUser={currentUser} />
