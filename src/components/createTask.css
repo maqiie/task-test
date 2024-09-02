@@ -1,157 +1,144 @@
-
 .create-task-container {
-  max-width: 600px;
-  margin: 0 auto;
   padding: 20px;
-  border: 1px solid #ccc;
-  border-radius: 8px;
+  max-width: 800px;
+  margin: 0 auto;
   background-color: #f9f9f9;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  transition: box-shadow 0.3s ease;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  position: relative;
+  margin-bottom: 70px; /* Ensure space for the floating navbar */
 }
 
-.create-task-container:hover {
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
-}
-
-.create-task-container h2 {
-  text-align: center;
-  margin-bottom: 20px;
-  color: #333;
-}
-
-.create-task-container form {
+.task-form {
   display: flex;
   flex-direction: column;
 }
 
-.create-task-container form div {
+.form-title {
+  font-size: 24px;
+  font-weight: bold;
+  margin-bottom: 20px;
+}
+
+.form-group {
   margin-bottom: 15px;
 }
 
-.create-task-container label {
-  font-weight: bold;
-  margin-bottom: 5px;
+.form-group label {
   display: block;
+  margin-bottom: 5px;
+  font-weight: 500;
 }
 
-.create-task-container input[type="text"],
-.create-task-container input[type="date"],
-.create-task-container input[type="time"],
-.create-task-container select,
-.create-task-container textarea {
+.form-group input,
+.form-group textarea,
+.form-group select {
   width: 100%;
-  padding: 10px;
-  box-sizing: border-box;
-  border: 1px solid #ccc;
+  padding: 8px;
+  border: 1px solid #ddd;
   border-radius: 4px;
-  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+  font-size: 16px;
 }
 
-.create-task-container input[type="text"]:focus,
-.create-task-container input[type="date"]:focus,
-.create-task-container input[type="time"]:focus,
-.create-task-container select:focus,
-.create-task-container textarea:focus {
-  border-color: #80bdff;
-  box-shadow: 0 0 5px rgba(128, 189, 255, 0.5);
-  outline: none;
-}
-
-.create-task-container textarea {
+.form-group textarea {
   resize: vertical;
 }
 
-.create-task-container button {
-  padding: 10px 15px;
-  background-color: #28a745;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-}
-
-.create-task-container button:hover:not([disabled]) {
-  background-color: #218838;
-}
-
-.create-task-container button[disabled] {
-  background-color: #ccc;
-  cursor: not-allowed;
-}
-
-.create-task-container .error {
-  color: red;
-  margin-bottom: 20px;
-}
-
-.create-task-container .success {
-  color: green;
-  margin-bottom: 20px;
-}
-
-.create-task-container .conflict {
-  background-color: #ffe0e0;
-  border: 1px solid #ff0000;
-  padding: 10px;
-  margin-top: 20px;
-  border-radius: 4px;
-}
-
-.create-task-container .filtered-users-list,
-.create-task-container .selected-users-list {
-  list-style-type: none;
+.selected-users-list,
+.filtered-users-list {
+  margin-top: 10px;
   padding: 0;
-  margin: 0;
+  list-style: none;
 }
 
-.create-task-container .filtered-users-list li,
-.create-task-container .selected-users-list li {
-  padding: 10px;
-  background-color: #fff;
-  border: 1px solid #ccc;
-  margin-top: 5px;
-  cursor: pointer;
+.selected-user-item,
+.filtered-users-list li {
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  margin-bottom: 5px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  transition: background-color 0.3s ease;
+  background-color: #fff;
 }
 
-.create-task-container .filtered-users-list li:hover,
-.create-task-container .selected-users-list li:hover {
-  background-color: #f0f0f0;
+.selected-user-item button,
+.filtered-users-list li {
+  cursor: pointer;
+  color: #007bff;
+  border: none;
+  background: none;
 }
 
-.create-task-container .selected-user-item button {
-  background-color: #dc3545;
+.selected-user-item button:hover,
+.filtered-users-list li:hover {
+  text-decoration: underline;
+}
+
+.error-message,
+.success-message {
+  margin-top: 10px;
+  padding: 10px;
+  border-radius: 4px;
+}
+
+.error-message {
+  color: #ff4d4d;
+  background-color: #ffe6e6;
+}
+
+.success-message {
+  color: #4caf50;
+  background-color: #e6ffe6;
+}
+
+.conflict {
+  margin-top: 20px;
+  padding: 10px;
+  border: 1px solid #f1c40f;
+  border-radius: 4px;
+  background-color: #fff3cd;
+}
+
+.conflict strong {
+  display: block;
+  margin-bottom: 5px;
+}
+
+input[type="text"]#search {
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  width: 100%;
+  font-size: 16px;
+  margin-top: 10px;
+}
+
+button {
+  background-color: #007bff;
   color: white;
   border: none;
-  padding: 5px 10px;
-  cursor: pointer;
   border-radius: 4px;
-  transition: background-color 0.3s ease;
+  padding: 10px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background-color 0.3s;
 }
 
-.create-task-container .selected-user-item button:hover {
-  background-color: #c82333;
+button:hover {
+  background-color: #0056b3;
 }
 
-@media (max-width: 768px) {
-  .create-task-container {
-    padding: 15px;
-  }
-  
-  .create-task-container input[type="text"],
-  .create-task-container input[type="date"],
-  .create-task-container input[type="time"],
-  .create-task-container select,
-  .create-task-container textarea {
-    padding: 8px;
-  }
+button:disabled {
+  background-color: #cccccc;
+  cursor: not-allowed;
+}
 
-  .create-task-container button {
-    padding: 8px 12px;
-  }
+.loader {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  font-size: 24px;
+  color: #007bff;
 }

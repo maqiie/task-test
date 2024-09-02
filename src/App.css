@@ -1,3 +1,5 @@
+/* Global Styles */
+
 .App {
   text-align: center;
 }
@@ -37,9 +39,8 @@
   }
 }
 
+/* Home Page Styles */
 
-
-/* styles/Home.css */
 .home {
   display: flex;
   flex-direction: column;
@@ -66,4 +67,8 @@
   background-color: #f1f1f1;
   text-align: center;
   border-top: 1px solid #ddd;
+}
+
+.main-content {
+  padding-bottom: 80px; /* Ensure there's space for the navbar/footer */
 }

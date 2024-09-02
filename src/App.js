@@ -20,6 +20,10 @@ import Invitations from "./components/Invitations";
 import Loader from "./components/Loader";
 import { ActionCableProvider } from '@thrash-industries/react-actioncable-provider';
 import Chat from "./components/Chat";
+import './App.css'
+import ChatWindow from "./components/ChatWindow";
+import FriendList from "./components/FriendList";
+import Message from "./components/Message";
 
 function App() {
   const [currentUser, setCurrentUser] = useState(null);
@@ -76,9 +80,9 @@ function App() {
   };
 
   return (
-    <ActionCableProvider url="wss://tasker-test.vercel.app/cable">
+    <ActionCableProvider url="wss://localhost:3001/cable">
       <Router>
-        <Navbar currentUser={currentUser} onLogout={handleLogout} invitationsCount={invitationsCount} />
+        {/* <Navbar currentUser={currentUser} onLogout={handleLogout} invitationsCount={invitationsCount} /> */}
         <Notifications currentUser={currentUser} />
         {loading ? (
           <Loader />
@@ -97,7 +101,7 @@ function App() {
             <Route path="/chat" element={<Chat currentUser={currentUser} authToken={authToken} />} />
             </Routes>
         )}
-        <Footer />
+        {/* <Footer /> */}
       </Router>
     </ActionCableProvider>
   );

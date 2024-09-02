@@ -1,239 +1,157 @@
 /* Chat.css */
 
-/* General Styles */
-body {
-  margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Oxygen, Ubuntu, Cantarell, Fira Sans, Droid Sans, Helvetica Neue, sans-serif;
-}
-
-h1, h2, p {
-  margin: 0;
-}
-
-/* Chat Container */
+/* Base styles for the chat container */
 .chat-container {
   display: flex;
-  flex-direction: column;
   height: 100vh;
-  background-color: #f5f5f5;
+  background-color: #f8f9fa;
 }
 
-/* Header for Small Screens */
-.header-mobile {
-  display: none;
+.sidebar {
+  width: 250px;
+  background-color: #ffffff;
+  box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease;
+  transform: translateX(-100%);
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  z-index: 1000;
+}
+
+.sidebar.open {
+  transform: translateX(0);
+}
+
+.chat-area {
+  flex: 1;
+  margin-left: 250px;
+  transition: margin-left 0.3s ease;
+}
+
+.chat-area.full-width {
+  margin-left: 0;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  background: linear-gradient(to right, #6b5b95, #8e44ad);
+  color: white;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
 }
 
 @media (max-width: 768px) {
-  .header-mobile {
+  .sidebar {
+    width: 100%;
+    height: 100%;
+    transform: translateX(-100%);
+  }
+
+  .sidebar.open {
+    transform: translateX(0);
+  }
+
+  .chat-area {
+    margin-left: 0;
+  }
+
+  .header {
     display: flex;
     justify-content: space-between;
-    align-items: center;
-    background: linear-gradient(to right, #6d28d9, #4f46e5);
-    color: white;
     padding: 16px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  }
-
-  .header-mobile button {
-    background: transparent;
-    border: none;
+    background: linear-gradient(to right, #6b5b95, #8e44ad);
     color: white;
-    cursor: pointer;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
   }
 
-  .header-mobile h1 {
-    font-size: 1.25rem;
-    font-weight: 600;
+  .chat-area {
+    margin-top: 56px; /* Adjust based on header height */
   }
 }
 
-/* Sidebar for Friends */
-.sidebar {
-  width: 280px;
-  background-color: #ffffff;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+.message-container {
   display: flex;
   flex-direction: column;
-}
-
-.sidebar-header {
-  padding: 16px;
-  font-size: 1.5rem;
-  font-weight: 700;
-  border-bottom: 1px solid #e5e7eb;
-}
-
-.friend-list {
-  flex: 1;
+  height: calc(100vh - 56px); /* Adjust based on header height */
   overflow-y: auto;
-}
-
-.friend-item {
-  display: flex;
-  align-items: center;
-  padding: 12px;
-  border-bottom: 1px solid #e5e7eb;
-  cursor: pointer;
-  transition: background-color 0.2s ease;
-}
-
-.friend-item:hover {
-  background-color: #f3f4f6;
-}
-
-.friend-avatar {
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  overflow: hidden;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background-color: #d1d5db;
-  margin-right: 12px;
-}
-
-.friend-avatar img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.friend-info {
-  display: flex;
-  flex-direction: column;
-}
-
-.friend-name {
-  font-weight: 600;
-}
-
-.friend-message {
-  color: #6b7280;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-/* Chat Area */
-.chat-area {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-}
-
-.chat-header {
-  background: linear-gradient(to right, #6d28d9, #4f46e5);
-  color: white;
   padding: 16px;
-  font-size: 1.125rem;
-  font-weight: 600;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.chat-messages {
-  flex: 1;
-  padding: 16px;
-  overflow-y: auto;
-  background-color: #ffffff;
-}
-
-.message-date {
-  text-align: center;
-  color: #9ca3af;
-  font-weight: 600;
-  margin: 16px 0;
 }
 
 .message {
-  margin-bottom: 16px;
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: 10px;
+}
+
+.message.sent {
+  justify-content: flex-end;
+}
+
+.message.received {
+  justify-content: flex-start;
 }
 
 .message-content {
-  padding: 12px;
+  max-width: 60%;
+  padding: 8px 12px;
   border-radius: 8px;
-  max-width: 80%;
-  word-wrap: break-word;
+  font-size: 14px;
+  line-height: 1.5;
 }
 
-.message-sent {
-  background-color: #3b82f6;
-  color: white;
-  align-self: flex-end;
+.message.sent .message-content {
+  background-color: #007bff;
+  color: #fff;
 }
 
-.message-received {
-  background-color: #f3f4f6;
-  color: #111827;
-  align-self: flex-start;
-}
-
-.message-file-link {
-  margin-top: 8px;
-  color: #3b82f6;
-  text-decoration: underline;
+.message.received .message-content {
+  background-color: #f1f1f1;
+  color: #000;
 }
 
 .message-timestamp {
-  font-size: 0.75rem;
-  color: #9ca3af;
+  font-size: 12px;
+  color: #6c757d;
   margin-top: 4px;
 }
 
-/* Chat Input */
-.chat-input {
-  padding: 12px;
-  border-top: 1px solid #e5e7eb;
-  background-color: #f9fafb;
+.input-container {
   display: flex;
   align-items: center;
-}
-
-.file-upload-btn {
-  background-color: #f3f4f6;
   padding: 8px;
-  border-radius: 50%;
-  cursor: pointer;
-  transition: background-color 0.2s ease;
+  border-top: 1px solid #ddd;
+  background-color: #fff;
 }
 
-.file-upload-btn:hover {
-  background-color: #e5e7eb;
-}
-
-.file-upload-btn svg {
-  width: 24px;
-  height: 24px;
-  color: #4b5563;
-}
-
-.textarea {
+.input-container input {
   flex: 1;
-  border: 1px solid #d1d5db;
   padding: 8px;
-  border-radius: 8px;
-  margin-left: 8px;
-  resize: none;
+  border: 1px solid #ddd;
+  border-radius: 4px;
 }
 
-.send-btn {
-  background-color: #3b82f6;
-  color: white;
+.input-container button {
+  margin-left: 8px;
   padding: 8px 16px;
-  border-radius: 8px;
-  margin-left: 8px;
+  border: none;
+  border-radius: 4px;
+  background-color: #007bff;
+  color: #fff;
   cursor: pointer;
-  transition: background-color 0.2s ease;
 }
 
-.send-btn:hover {
-  background-color: #2563eb;
-}
-
-/* Scrollable Area */
-.scrollable {
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  overflow-y: auto;
+.input-container button:hover {
+  background-color: #0056b3;
 }

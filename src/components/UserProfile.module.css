@@ -112,3 +112,7 @@
     margin-top: 1.5rem;
   }
   
+  .user-profile-container {
+    padding-bottom: 3rem; /* Adjust this value based on your navbar height */
+  }
+  
