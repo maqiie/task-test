@@ -1,9 +1,239 @@
 /* eslint-disable */
 
-import React, { useEffect, useState, useCallback } from 'react';
-import apiClient from '../services/apiService'; // Adjust path as needed
-import { createChatSubscription } from '../actionCableConsumer'; // Adjust path as needed
-// import './Chat.css'; // Ensure Tailwind CSS is included
+import React, { useEffect, useState, useCallback, useRef } from "react";
+import apiClient from "../services/apiService"; // Adjust path as needed
+import { createChatSubscription } from "../actionCableConsumer"; // Adjust path as needed
+import moment from "moment"; // For handling date and time formatting
+import { debounce } from "lodash"; // Make sure to install lodash if not already
+import { parseISO, format } from "date-fns";
+
+const ChatHeader = ({ onSidebarToggle, sidebarOpen, selectedFriend }) => (
+  <div className="flex justify-between items-center bg-gradient-to-r from-purple-600 to-indigo-600 text-white p-4 shadow-md">
+    <button className="text-white focus:outline-none" onClick={onSidebarToggle}>
+      <svg
+        className="w-6 h-6"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth="2"
+          d="M4 6h16M4 12h16m-7 6h7"
+        ></path>
+      </svg>
+    </button>
+    <h1 className="text-lg font-semibold truncate">
+      {selectedFriend ? ` ${selectedFriend.name}` : "Chat"}
+    </h1>
+  </div>
+);
+
+const formatTimestamp = (createdAt) => {
+  if (!createdAt) {
+    console.warn("No timestamp provided.");
+    return "No Time Available";
+  }
+
+  try {
+    const date = new Date(createdAt);
+    console.log("Parsing date:", createdAt, "->", date);
+
+    if (isNaN(date.getTime())) {
+      throw new Error("Invalid date");
+    }
+
+    return format(date, "HH:mm");
+  } catch (error) {
+    console.warn("Error formatting timestamp:", createdAt, error);
+    return "Invalid Date";
+  }
+};
+
+const Sidebar = ({ open, friends, onFriendClick, onClose }) => {
+  const sortedFriends = friends.slice().sort((a, b) => {
+    const timestampA = a.latestMessage?.created_at || new Date(0).toISOString();
+    const timestampB = b.latestMessage?.created_at || new Date(0).toISOString();
+    return new Date(timestampB).getTime() - new Date(timestampA).getTime();
+  });
+
+  return (
+    <div
+      className={`fixed inset-y-0 left-0 transform ${
+        open ? "translate-x-0" : "-translate-x-full"
+      } md:relative md:translate-x-0 transition-transform duration-300 ease-in-out w-80 bg-gradient-to-r from-purple-600 to-indigo-600 text-white flex flex-col shadow-lg z-50`}
+    >
+      <div className="p-4 border-b border-indigo-700 flex items-center justify-between">
+        <h2 className="text-2xl font-bold">Friends</h2>
+        <button
+          className="md:hidden text-white focus:outline-none hover:text-gray-200"
+          onClick={onClose}
+        >
+          <svg
+            className="w-6 h-6"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2"
+              d="M6 18L18 6M6 6l12 12"
+            ></path>
+          </svg>
+        </button>
+      </div>
+      <div className="flex-1 overflow-y-auto p-4">
+        {sortedFriends.length > 0 ? (
+          <ul className="space-y-2">
+            {sortedFriends.map((friend) => {
+              const initials = friend.name
+                .split(" ")
+                .map((word) => word[0])
+                .join("")
+                .toUpperCase();
+
+              const latestMessage = friend.latestMessage || {
+                content: "No messages yet",
+                created_at: null,
+              };
+
+              const lastMessageTime = formatTimestamp(latestMessage.created_at);
+
+              return (
+                <li
+                  key={friend.id}
+                  className="flex items-start p-3 bg-gray-700 hover:bg-gray-600 rounded-md transition-colors duration-300 cursor-pointer"
+                  onClick={() => onFriendClick(friend)}
+                >
+                  <div
+                    className="w-14 h-14 flex items-center justify-center rounded-full bg-gray-500 text-white text-xl font-semibold mr-4"
+                    title={friend.name}
+                  >
+                    {initials}
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex justify-between items-center mb-1">
+                      <p className="text-lg font-semibold truncate">
+                        {friend.name}
+                      </p>
+                      <span
+                        className={`text-xs ${
+                          friend.online ? "text-green-400" : "text-gray-400"
+                        }`}
+                      >
+                        {friend.online ? "Online" : "Offline"}
+                      </span>
+                    </div>
+                    <p className="text-sm text-gray-300 truncate">
+                      {latestMessage.content}
+                    </p>
+                    <div className="flex justify-between items-center mt-1">
+                      <p className="text-xs text-gray-400">{lastMessageTime}</p>
+                      {friend.unreadMessageCount > 0 && (
+                        <span className="bg-red-500 text-white text-xs font-semibold px-2 py-1 rounded-full">
+                          {friend.unreadMessageCount}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        ) : (
+          <p className="text-center text-gray-300">No friends found.</p>
+        )}
+      </div>
+    </div>
+  );
+};
+
+const MessageList = ({ messages, currentUser }) => {
+  // Group messages by date
+  const groupedMessages = messages
+    .slice()
+    .sort((a, b) => new Date(a.created_at) - new Date(b.created_at))
+    .reduce((acc, message) => {
+      const date = moment(message.created_at)
+        .startOf("day")
+        .format("YYYY-MM-DD");
+      if (!acc[date]) {
+        acc[date] = [];
+      }
+      acc[date].push(message);
+      return acc;
+    }, {});
+
+  // Function to render the date label
+  const renderDateLabel = (date) => {
+    if (moment(date).isSame(moment(), "day")) {
+      return "Today";
+    } else if (moment(date).isSame(moment().subtract(1, "day"), "day")) {
+      return "Yesterday";
+    } else {
+      return moment(date).format("MMMM D, YYYY");
+    }
+  };
+
+  return (
+    <div className="space-y-4">
+      {Object.keys(groupedMessages).map((date) => (
+        <div key={date}>
+          <p className="text-center text-gray-500 mb-4 text-sm font-semibold">
+            {renderDateLabel(date)}
+          </p>
+          {groupedMessages[date].map((message) => {
+            const isSentByCurrentUser = message.user_id === currentUser.id;
+            return (
+              <div
+                key={message.id}
+                className={`flex mb-3 ${
+                  isSentByCurrentUser ? "justify-end" : "justify-start"
+                }`}
+              >
+                <div
+                  className={`relative max-w-xs md:max-w-md p-4 rounded-lg shadow-lg ${
+                    isSentByCurrentUser
+                      ? "bg-indigo-600 text-white"
+                      : "bg-gray-200 text-black"
+                  } ${
+                    isSentByCurrentUser ? "ml-2" : "mr-2"
+                  } transition-transform transform hover:scale-105`}
+                >
+                  <p className="mb-1">{message.content}</p>
+                  <span
+                    className={`absolute text-xs ${
+                      isSentByCurrentUser
+                        ? "right-2 bottom-1"
+                        : "left-2 bottom-1"
+                    }`}
+                  >
+                    {moment(message.created_at).format("h:mm A")}
+                  </span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      ))}
+    </div>
+  );
+};
+
+const TypingIndicator = ({ typingUsers }) => (
+  <div className="text-gray-500 italic">
+    {typingUsers.length > 0
+      ? `${typingUsers.join(", ")} ${
+          typingUsers.length > 1 ? "are" : "is"
+        } typing...`
+      : ""}
+  </div>
+);
 
 const Chat = ({ currentUser }) => {
   const [messages, setMessages] = useState([]);
@@ -11,11 +241,19 @@ const Chat = ({ currentUser }) => {
   const [selectedFriend, setSelectedFriend] = useState(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [chatroomId, setRoomId] = useState(null);
-  const [messageInput, setMessageInput] = useState('');
+  const [messageInput, setMessageInput] = useState("");
   const [chatChannel, setChatChannel] = useState(null);
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [loadingFriends, setLoadingFriends] = useState(false);
   const [error, setError] = useState(null);
+  const [typingUsers, setTypingUsers] = useState([]);
+  const messagesEndRef = useRef(null);
+
+  const scrollToBottom = () => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  };
 
   const fetchAcceptedFriends = useCallback(async () => {
     if (!currentUser) return;
@@ -24,15 +262,103 @@ const Chat = ({ currentUser }) => {
     setError(null);
 
     try {
-      const response = await apiClient.get(`/friend_requests/${currentUser.id}/accepted`);
-      setAcceptedFriends(response.data || []);
+      // Fetch accepted friends
+      const response = await apiClient.get(
+        `/friend_requests/${currentUser.id}/accepted`
+      );
+      const friends = response.data || [];
+
+      console.log("Accepted friends:", friends);
+
+      // Fetch the latest message for each friend's chatroom
+      const friendsWithMessages = await Promise.all(
+        friends.map(async (friend) => {
+          const chatroomId = friend.chatroom_id;
+
+          if (!chatroomId) {
+            console.warn(`No chatroom ID for friend ${friend.id}`);
+            return {
+              ...friend,
+              latestMessage: {
+                content: "No messages yet",
+                timestamp: new Date(),
+              },
+            };
+          }
+
+          try {
+            // Fetch messages for the chatroom associated with the friend
+            const messagesResponse = await apiClient.get("/messages", {
+              params: { chatroom_id: chatroomId },
+            });
+
+            console.log(
+              `Messages for friend ${friend.id}:`,
+              messagesResponse.data
+            );
+
+            const messages = messagesResponse.data || [];
+            const latestMessage =
+              messages.length > 0
+                ? messages[messages.length - 1]
+                : { content: "No messages yet", timestamp: new Date() };
+
+            console.log(
+              `Latest message for friend ${friend.id}:`,
+              latestMessage
+            );
+
+            return { ...friend, latestMessage };
+          } catch (messageError) {
+            console.error(
+              `Error fetching messages for chatroom ${chatroomId}:`,
+              {
+                message: messageError.message,
+                response: messageError.response?.data,
+              }
+            );
+            return {
+              ...friend,
+              latestMessage: {
+                content: "Error fetching message",
+                timestamp: new Date(),
+              },
+            };
+          }
+        })
+      );
+
+      setAcceptedFriends(friendsWithMessages);
     } catch (error) {
-      setError('Error fetching accepted friends.');
-      console.error('Error fetching accepted friends:', error.message);
+      console.error("Error fetching accepted friends:", {
+        message: error.message,
+        response: error.response?.data,
+      });
+      setError("Error fetching accepted friends.");
     } finally {
       setLoadingFriends(false);
     }
   }, [currentUser]);
+
+  const fetchMessages = useCallback(async () => {
+    if (!chatroomId) return;
+
+    setLoadingMessages(true);
+    setError(null);
+
+    try {
+      const response = await apiClient.get(`/messages`, {
+        params: { chatroom_id: chatroomId },
+      });
+      setMessages(response.data || []);
+      scrollToBottom();
+    } catch (error) {
+      setError("Error fetching messages.");
+      console.error("Error fetching messages:", error.message);
+    } finally {
+      setLoadingMessages(false);
+    }
+  }, [chatroomId]);
 
   const initializeChatSubscription = useCallback((roomId) => {
     if (chatChannel) {
@@ -41,15 +367,55 @@ const Chat = ({ currentUser }) => {
 
     const newChatChannel = createChatSubscription(roomId, {
       received(data) {
-        setMessages((prevMessages) => [...prevMessages, data.message]);
-        if (Notification.permission === 'granted') {
-          new Notification('New message', { body: data.message.content });
+        if (data.message) {
+          setMessages((prevMessages) => [...prevMessages, data.message]);
+          scrollToBottom();
+          if (Notification.permission === "granted") {
+            new Notification("New message", { body: data.message.content });
+          }
         }
-      }
+        if (data.typing !== undefined) {
+          setTypingUsers((prevTyping) => {
+            const newTyping = [...prevTyping, data.typing];
+            return [...new Set(newTyping)]; // Remove duplicates
+          });
+        }
+      },
     });
 
     setChatChannel(newChatChannel);
-  }, [chatChannel]);
+  }, []);
+
+  useEffect(() => {
+    if (chatroomId) {
+      initializeChatSubscription(chatroomId);
+    }
+
+    return () => {
+      if (chatChannel) {
+        chatChannel.unsubscribe();
+      }
+    };
+  }, [chatroomId, initializeChatSubscription]);
+
+  const handleTyping = useCallback(
+    debounce(() => {
+      if (chatChannel) {
+        chatChannel.perform("user_typing", {
+          chatroom_id: chatroomId,
+          user_id: currentUser.id,
+        });
+      }
+    }, 500), // Adjust debounce delay as needed
+    [chatChannel, chatroomId, currentUser]
+  );
+  useEffect(() => {
+    const typingTimeout = setTimeout(() => {
+      setTypingUsers([]);
+    }, 5000); // Adjust timeout period as needed
+
+    return () => clearTimeout(typingTimeout);
+  }, [typingUsers]);
 
   const handleFriendClick = async (friend) => {
     try {
@@ -61,235 +427,129 @@ const Chat = ({ currentUser }) => {
         const chatroom = response.data;
         setRoomId(chatroom.id);
         setSelectedFriend(friend);
-        setMessages([]); // Clear messages state when opening a new chatroom
+        setMessages([]);
         setSidebarOpen(false);
 
         initializeChatSubscription(chatroom.id);
       } else {
-        setError('Error fetching or creating chatroom.');
+        setError("Error fetching or creating chatroom.");
       }
     } catch (error) {
-      setError('Error handling friend click.');
+      console.error("Error checking or creating chatroom:", error.message);
+      setError("Error checking or creating chatroom.");
     }
   };
 
-  useEffect(() => {
-    if (!chatroomId) return;
+  const handleMessageSubmit = async (e) => {
+    e.preventDefault();
 
-    const fetchMessages = async () => {
-      setLoadingMessages(true);
-      setError(null);
+    // Check if the message input is empty
+    if (!messageInput.trim()) return;
 
-      try {
-        const response = await apiClient.get(`/chatrooms/${chatroomId}/messages`);
-        setMessages(response.data || []);
-      } catch (error) {
-        setError('Error fetching messages.');
-      } finally {
-        setLoadingMessages(false);
-      }
+    const newMessage = {
+      content: messageInput,
+      chatroom_id: chatroomId,
+      user_id: currentUser.id,
+      created_at: new Date().toISOString(),
     };
 
-    fetchMessages();
-  }, [chatroomId]);
+    // Optimistically update the local state
+    setMessages((prevMessages) => [...prevMessages, newMessage]);
+    setMessageInput("");
 
-  useEffect(() => {
-    fetchAcceptedFriends();
-  }, [fetchAcceptedFriends]);
-
-  useEffect(() => {
-    return () => {
-      if (chatChannel) {
-        chatChannel.unsubscribe();
-      }
-    };
-  }, [chatChannel]);
-
-  const handleNewUserMessage = () => {
-    if (!chatroomId || !messageInput.trim()) return;
-
-    if (chatChannel) {
-      chatChannel.perform('send_message', {
-        chatroom_id: chatroomId,
-        content: messageInput,
-        sender_id: currentUser.id
+    try {
+      // Send the message to the backend
+      const response = await apiClient.post("/messages", {
+        message: newMessage,
       });
-      setMessageInput('');
-    } else {
-      console.error('Chat channel not found');
+
+      // Update the message with the ID returned from the backend
+      setMessages((prevMessages) =>
+        prevMessages.map((msg) =>
+          msg.created_at === newMessage.created_at
+            ? { ...msg, id: response.data.id } // Update with ID from backend
+            : msg
+        )
+      );
+    } catch (error) {
+      setError("Error sending message.");
+      console.error("Error sending message:", error.message);
+
+      // Rollback optimistic update if needed
+      setMessages((prevMessages) =>
+        prevMessages.filter((msg) => msg.created_at !== newMessage.created_at)
+      );
     }
   };
 
-  const handleFileUpload = (event) => {
-    const file = event.target.files[0];
-    if (!file) return;
+  const handleSidebarToggle = () => setSidebarOpen(!sidebarOpen);
+  const handleSidebarClose = () => setSidebarOpen(false);
 
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      if (chatChannel) {
-        chatChannel.perform('send_message', {
-          chatroom_id: chatroomId,
-          content: reader.result,
-          file_name: file.name,
-          file_type: file.type,
-          sender_id: currentUser.id,
-        });
-      } else {
-        console.error('Chat channel not found');
-      }
-    };
-    reader.readAsDataURL(file);
-  };
+  useEffect(() => {
+    if (currentUser) {
+      fetchAcceptedFriends();
+    }
+  }, [currentUser, fetchAcceptedFriends]);
+
+  useEffect(() => {
+    if (chatroomId) {
+      fetchMessages();
+    }
+  }, [chatroomId, fetchMessages]);
+
+  useEffect(() => {
+    if (selectedFriend && Notification.permission !== "granted") {
+      Notification.requestPermission().catch((error) =>
+        console.error("Notification permission request failed:", error)
+      );
+    }
+  }, [selectedFriend]);
 
   return (
-    <div className="flex flex-col h-screen bg-gray-100">
-      {/* Header for Small Screens */}
-      <div className="md:hidden flex justify-between items-center bg-gradient-to-r from-purple-600 to-indigo-600 text-white p-4 shadow-md">
-        <button
-          className="text-white focus:outline-none"
-          onClick={() => setSidebarOpen(!sidebarOpen)}
-        >
-          <svg
-            className="w-6 h-6"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16m-7 6h7"></path>
-          </svg>
-        </button>
-        <h1 className="text-lg font-semibold">Chat</h1>
-      </div>
-
-      <div className="flex flex-1 overflow-hidden">
-        {/* Sidebar for Friends */}
-        <div
-          className={`fixed inset-y-0 left-0 transform ${
-            sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-          } md:relative md:translate-x-0 transition-transform duration-300 ease-in-out w-80 bg-gradient-to-r from-purple-600 to-indigo-600 text-white flex flex-col shadow-lg z-50`}
-        >
-          <div className="p-4 border-b border-indigo-700 flex items-center justify-between">
-            <h2 className="text-2xl font-bold">Friends</h2>
-            <button
-              className="md:hidden text-white focus:outline-none"
-              onClick={() => setSidebarOpen(false)}
-            >
-              <svg
-                className="w-6 h-6"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
-              </svg>
-            </button>
-          </div>
-          <div className="p-4 flex-1 overflow-y-auto">
-            {loadingFriends ? (
-              <p className="text-center text-gray-400">Loading friends...</p>
-            ) : (
-              <ul>
-                {acceptedFriends.length > 0 ? (
-                  acceptedFriends.map((friend) => (
-                    <li
-                      key={friend.id}
-                      className="cursor-pointer p-3 hover:bg-indigo-700 rounded transition duration-300 ease-in-out"
-                      onClick={() => handleFriendClick(friend)}
-                    >
-                      {friend.name}
-                    </li>
-                  ))
-                ) : (
-                  <p className="text-center text-gray-400">No friends available.</p>
-                )}
-              </ul>
-            )}
-            {error && <p className="text-red-500 text-center mt-2">{error}</p>}
-          </div>
+    <div className="flex h-screen">
+      <Sidebar
+        open={sidebarOpen}
+        friends={acceptedFriends}
+        onFriendClick={handleFriendClick}
+        onClose={handleSidebarClose}
+      />
+      <div className="flex-1 flex flex-col bg-gray-100">
+        <ChatHeader
+          onSidebarToggle={handleSidebarToggle}
+          sidebarOpen={sidebarOpen}
+          selectedFriend={selectedFriend}
+        />
+        <div className="flex-1 p-4 overflow-y-auto">
+          {loadingMessages ? (
+            <p>Loading messages...</p>
+          ) : (
+            <MessageList messages={messages} currentUser={currentUser} />
+          )}
+          <div ref={messagesEndRef} />
         </div>
-
-        {/* Chat Area */}
-        <div className="flex-1 flex flex-col">
-          {/* Chat Header */}
-          <div className="hidden md:flex bg-gradient-to-r from-purple-600 to-indigo-600 text-white p-4 shadow-md">
-            <h1 className="text-lg font-semibold">{selectedFriend ? selectedFriend.name : 'Select a friend'}</h1>
-          </div>
-
-          {/* Messages Display */}
-          <div className="flex-1 p-4 overflow-y-auto">
-            {loadingMessages ? (
-              <p className="text-center text-gray-400">Loading messages...</p>
-            ) : (
-              <div>
-                {messages.length > 0 ? (
-                  messages.map((msg) => (
-                    <div
-                      key={msg.id}
-                      className={`flex ${msg.user_id === currentUser.id ? 'justify-end' : 'justify-start'} mb-2`}
-                    >
-                      {msg.user_id !== currentUser.id && (
-                        <div className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center text-gray-600 mr-2">
-                          {selectedFriend && <span>{selectedFriend.name.charAt(0)}</span>}
-                        </div>
-                      )}
-                      <div
-                        className={`p-3 rounded-lg ${
-                          msg.user_id === currentUser.id
-                            ? 'bg-purple-500 text-white'
-                            : 'bg-gray-200 text-gray-800'
-                        }`}
-                      >
-                        <p>{msg.content}</p>
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  <p className="text-center text-gray-400">No messages yet.</p>
-                )}
-              </div>
-            )}
-            {error && <p className="text-red-500 text-center mt-2">{error}</p>}
-          </div>
-
-          {/* Message Input Area */}
-          <div className="bg-white p-4 flex items-center border-t border-gray-200">
-            <input
-              type="file"
-              accept="image/*,video/*,audio/*"
-              className="hidden"
-              id="fileUpload"
-              onChange={handleFileUpload}
-            />
-            <label
-              htmlFor="fileUpload"
-              className="text-blue-500 cursor-pointer mr-4"
+        <div className="px-4 pb-4">
+          <TypingIndicator typingUsers={typingUsers} />
+          {selectedFriend && (
+            <form
+              onSubmit={handleMessageSubmit}
+              className="mt-4 flex items-center"
             >
-              <svg
-                className="w-6 h-6"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                xmlns="http://www.w3.org/2000/svg"
+              <input
+                type="text"
+                value={messageInput}
+                onChange={(e) => setMessageInput(e.target.value)}
+                onKeyPress={handleTyping}
+                className="flex-1 p-2 border border-gray-300 rounded-l-lg"
+                placeholder="Type a message..."
+              />
+              <button
+                type="submit"
+                className="p-2 bg-indigo-600 text-white rounded-r-lg"
               >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 7h16M4 12h16m-7 6h7"></path>
-              </svg>
-            </label>
-            <input
-              type="text"
-              value={messageInput}
-              onChange={(e) => setMessageInput(e.target.value)}
-              placeholder="Type a message..."
-              className="flex-1 p-2 border border-gray-300 rounded-lg mr-2"
-            />
-            <button
-              onClick={handleNewUserMessage}
-              className="bg-blue-500 text-white p-2 rounded-lg"
-            >
-              Send
-            </button>
-          </div>
+                Send
+              </button>
+            </form>
+          )}
         </div>
       </div>
     </div>
@@ -297,1761 +557,3 @@ const Chat = ({ currentUser }) => {
 };
 
 export default Chat;
-
-// // import React, { useEffect, useState, useRef, useCallback } from 'react';
-// // import apiClient from '../services/apiService'; // Adjust path as needed
-// // import { createChatSubscription } from '../actionCableConsumer'; // Adjust path as needed
-
-// // const Chat = ({ currentUser }) => {
-// //   const [messages, setMessages] = useState([]);
-// //   const [acceptedFriends, setAcceptedFriends] = useState([]);
-// //   const [selectedFriend, setSelectedFriend] = useState(null);
-// //   const [sidebarOpen, setSidebarOpen] = useState(false);
-// //   const [chatroomId, setRoomId] = useState(null);
-// //   const [messageInput, setMessageInput] = useState('');
-// //   const [chatChannel, setChatChannel] = useState(null);
-// //   const [loadingMessages, setLoadingMessages] = useState(false);
-// //   const [loadingFriends, setLoadingFriends] = useState(false);
-// //   const [error, setError] = useState(null);
-
-// //   const messagesEndRef = useRef(null);
-
-// //   // Formats timestamps for display
-// //   const formatTimestamp = (timestamp) => {
-// //     const date = new Date(timestamp);
-// //     const now = new Date();
-// //     const daysDifference = Math.floor((now - date) / (1000 * 60 * 60 * 24));
-// //     const options = { hour: '2-digit', minute: '2-digit' };
-
-// //     if (daysDifference === 0) {
-// //       return date.toLocaleTimeString([], options);
-// //     } else if (daysDifference === 1) {
-// //       return `Yesterday ${date.toLocaleTimeString([], options)}`;
-// //     } else if (daysDifference < 7) {
-// //       return `${date.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' })} ${date.toLocaleTimeString([], options)}`;
-// //     } else {
-// //       return `${date.toLocaleDateString([], { year: 'numeric', month: 'short', day: 'numeric' })} ${date.toLocaleTimeString([], options)}`;
-// //     }
-// //   };
-
-// //   // Groups messages by date
-// //   const groupMessagesByDate = (messages) => {
-// //     const groupedMessages = {};
-// //     messages.forEach((message) => {
-// //       const messageDate = new Date(message.created_at).toDateString();
-// //       if (!groupedMessages[messageDate]) {
-// //         groupedMessages[messageDate] = [];
-// //       }
-// //       groupedMessages[messageDate].push(message);
-// //     });
-// //     return groupedMessages;
-// //   };
-
-// //   // Fetches accepted friends for the current user
-// //   const fetchAcceptedFriends = useCallback(async () => {
-// //     if (!currentUser) return;
-
-// //     setLoadingFriends(true);
-// //     setError(null);
-
-// //     try {
-// //       const response = await apiClient.get(`/friend_requests/${currentUser.id}/accepted`);
-// //       setAcceptedFriends(response.data || []);
-// //     } catch (error) {
-// //       setError('Error fetching accepted friends.');
-// //     } finally {
-// //       setLoadingFriends(false);
-// //     }
-// //   }, [currentUser]);
-
-// //   // Initializes chat subscription and handles incoming messages
-// //   const initializeChatSubscription = useCallback((roomId) => {
-// //     if (chatChannel) {
-// //       chatChannel.unsubscribe();
-// //     }
-
-// //     const newChatChannel = createChatSubscription(roomId, {
-// //       received(data) {
-// //         if (data.message) {
-// //           const formattedMessage = {
-// //             ...data.message,
-// //             isSentByCurrentUser: data.message.sender_id === currentUser.id,
-// //             timestamp: formatTimestamp(data.message.created_at),
-// //           };
-// //           setMessages((prevMessages) => [...prevMessages, formattedMessage]);
-// //         }
-// //       }
-// //     });
-
-// //     setChatChannel(newChatChannel);
-// //   }, [chatChannel, currentUser.id]);
-
-// //   // Handles the click on a friend to start or open a chat
-// //   const handleFriendClick = async (friend) => {
-// //     try {
-// //       const response = await apiClient.get(`/chatrooms/check_or_create`, { params: { user2_id: friend.id } });
-
-// //       if (response.status === 200) {
-// //         const chatroom = response.data;
-// //         setRoomId(chatroom.id);
-// //         setSelectedFriend(friend);
-// //         setMessages([]);
-// //         setSidebarOpen(false);
-// //         initializeChatSubscription(chatroom.id);
-// //       } else {
-// //         setError('Error fetching or creating chatroom.');
-// //       }
-// //     } catch (error) {
-// //       setError('Error handling friend click.');
-// //     }
-// //   };
-
-// //   // Fetches messages when chatroomId changes
-// //   useEffect(() => {
-// //     if (!chatroomId) return;
-
-// //     const fetchMessages = async () => {
-// //       setLoadingMessages(true);
-// //       setError(null);
-
-// //       try {
-// //         const response = await apiClient.get(`/chatrooms/${chatroomId}/messages`);
-// //         const formattedMessages = response.data.map((msg) => ({
-// //           ...msg,
-// //           isSentByCurrentUser: msg.user_id === currentUser.id,
-// //           timestamp: formatTimestamp(msg.created_at),
-// //         }));
-// //         setMessages(formattedMessages.sort((a, b) => new Date(a.created_at) - new Date(b.created_at))); // Sort messages by date
-// //       } catch (error) {
-// //         setError('Error fetching messages.');
-// //       } finally {
-// //         setLoadingMessages(false);
-// //       }
-// //     };
-
-// //     fetchMessages();
-// //   }, [chatroomId, currentUser.id]);
-
-// //   useEffect(() => {
-// //     fetchAcceptedFriends();
-// //   }, [fetchAcceptedFriends]);
-
-// //   // Automatically scrolls to the bottom of the chat
-// //   useEffect(() => {
-// //     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-// //   }, [messages]);
-
-// //   // Cleans up chat subscription on unmount
-// //   useEffect(() => {
-// //     return () => {
-// //       if (chatChannel) {
-// //         chatChannel.unsubscribe();
-// //       }
-// //     };
-// //   }, [chatChannel]);
-
-// //   // Sends a new user message
-// //   const handleNewUserMessage = () => {
-// //     if (!chatroomId || !messageInput.trim()) return;
-
-// //     if (chatChannel) {
-// //       chatChannel.perform('send_message', {
-// //         chatroom_id: chatroomId,
-// //         content: messageInput,
-// //         sender_id: currentUser.id,
-// //       });
-// //       setMessageInput('');
-// //     }
-// //   };
-
-// //   // Handles file upload
-// //   const handleFileUpload = (event) => {
-// //     const file = event.target.files[0];
-// //     if (!file) return;
-
-// //     const reader = new FileReader();
-// //     reader.onloadend = () => {
-// //       if (chatChannel) {
-// //         chatChannel.perform('send_message', {
-// //           chatroom_id: chatroomId,
-// //           content: reader.result,
-// //           file_name: file.name,
-// //           file_type: file.type,
-// //           sender_id: currentUser.id,
-// //         });
-// //       }
-// //     };
-// //     reader.readAsDataURL(file);
-// //   };
-
-// //   const groupedMessages = groupMessagesByDate(messages);
-
-// //   return (
-// //     <div className="flex flex-col h-screen bg-gray-100">
-// //       {/* Header for Small Screens */}
-// //       <div className="md:hidden flex justify-between items-center bg-gradient-to-r from-purple-600 to-indigo-600 text-white p-4 shadow-md">
-// //         <button
-// //           className="text-white focus:outline-none"
-// //           onClick={() => setSidebarOpen(!sidebarOpen)}
-// //         >
-// //           <svg
-// //             className="w-6 h-6"
-// //             fill="none"
-// //             stroke="currentColor"
-// //             viewBox="0 0 24 24"
-// //             xmlns="http://www.w3.org/2000/svg"
-// //           >
-// //             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16m-7 6h7"></path>
-// //           </svg>
-// //         </button>
-// //         <h1 className="text-lg font-semibold">Chat</h1>
-// //       </div>
-
-// //       <div className="flex flex-1 overflow-hidden">
-// //         {/* Sidebar for Friends */}
-// //         <div
-// //           className={`fixed inset-y-0 left-0 transform ${
-// //             sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-// //           } md:relative md:translate-x-0 transition-transform duration-300 ease-in-out bg-gradient-to-b from-purple-100 to-blue-100 shadow-lg md:w-80 w-64 border-r border-gray-200 z-10`}
-// //         >
-// //           <div className="p-4 h-full flex flex-col">
-// //             <h2 className="text-2xl font-bold mb-4 text-gray-800">Friends</h2>
-// //             {loadingFriends ? (
-// //               <p className="text-center text-gray-600">Loading friends...</p>
-// //             ) : (
-// //               <ul className="flex-1 overflow-y-auto space-y-2">
-// //                 {acceptedFriends.map((friend) => (
-// //                   <li
-// //                     key={friend.id}
-// //                     className={`flex justify-between items-center p-3 rounded-lg bg-white shadow-md hover:bg-blue-50 cursor-pointer transition-colors duration-150 ease-in-out ${
-// //                       selectedFriend?.id === friend.id ? 'bg-blue-100' : ''
-// //                     }`}
-// //                     onClick={() => handleFriendClick(friend)}
-// //                   >
-// //                     <span className="text-blue-800 font-semibold">{friend.name}</span>
-// //                   </li>
-// //                 ))}
-// //               </ul>
-// //             )}
-// //           </div>
-// //         </div>
-
-// //         {/* Chat Container */}
-// //         <div className="flex-1 flex flex-col bg-gradient-to-br from-gray-100 to-white">
-// //           {/* Chat Messages */}
-// //           <div className="flex-1 p-4 overflow-y-auto">
-// //             {loadingMessages && <p className="text-center text-gray-600">Loading messages...</p>}
-// //             {error && <p className="text-center text-red-600">{error}</p>}
-// //             {Object.keys(groupedMessages).length === 0 && !loadingMessages && !error && (
-// //               <p className="text-center text-gray-600">Start a conversation by selecting a friend.</p>
-// //             )}
-// //             {Object.keys(groupedMessages).map((date) => (
-// //               <div key={date} className="mb-4">
-// //                 <div className="text-center text-gray-600 font-semibold mb-2">{date}</div>
-// //                 {groupedMessages[date].map((message) => (
-// //                   <div
-// //                     key={message.id}
-// //                     className={`flex items-start mb-2 ${message.isSentByCurrentUser ? 'justify-end' : 'justify-start'}`}
-// //                   >
-// //                     <div
-// //                       className={`p-3 rounded-xl max-w-xs text-sm ${
-// //                         message.isSentByCurrentUser
-// //                           ? 'bg-blue-500 text-white shadow-md'
-// //                           : 'bg-gray-200 text-gray-800 shadow-md'
-// //                       }`}
-// //                     >
-// //                       {message.content}
-// //                       {message.file_url && (
-// //                         <div className="mt-2">
-// //                           <a
-// //                             href={message.file_url}
-// //                             target="_blank"
-// //                             rel="noopener noreferrer"
-// //                             className="text-blue-400 underline"
-// //                           >
-// //                             {message.file_name}
-// //                           </a>
-// //                         </div>
-// //                       )}
-// //                     </div>
-// //                   </div>
-// //                 ))}
-// //               </div>
-// //             ))}
-// //             <div ref={messagesEndRef} />
-// //           </div>
-
-// //           {/* Message Input */}
-// //           <div className="bg-white p-4 border-t border-gray-200 flex items-center space-x-4">
-// //             <input
-// //               type="file"
-// //               accept="image/*,video/*,audio/*"
-// //               className="hidden"
-// //               id="file-upload"
-// //               onChange={handleFileUpload}
-// //             />
-// //             <label htmlFor="file-upload" className="cursor-pointer text-blue-500">
-// //               <svg
-// //                 className="w-6 h-6"
-// //                 fill="none"
-// //                 stroke="currentColor"
-// //                 viewBox="0 0 24 24"
-// //                 xmlns="http://www.w3.org/2000/svg"
-// //               >
-// //                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 9l4 4m0 0l-4 4m4-4H3"></path>
-// //               </svg>
-// //             </label>
-// //             <input
-// //               type="text"
-// //               value={messageInput}
-// //               onChange={(e) => setMessageInput(e.target.value)}
-// //               placeholder="Type a message..."
-// //               className="flex-1 p-2 border rounded-lg outline-none"
-// //               onKeyDown={(e) => e.key === 'Enter' && handleNewUserMessage()}
-// //             />
-// //             <button
-// //               onClick={handleNewUserMessage}
-// //               className="bg-blue-500 text-white p-2 rounded-lg"
-// //             >
-// //               Send
-// //             </button>
-// //           </div>
-// //         </div>
-// //       </div>
-// //     </div>
-// //   );
-// // };
-
-// // export default Chat;
-
-
-
-
-// // import React, { useEffect, useState, useRef, useCallback } from "react";
-// // import apiClient from "../services/apiService"; // Adjust path as needed
-// // import { createChatSubscription } from "../actionCableConsumer"; // Adjust path as needed
-// // import './Chat.css';
-
-// // const Chat = ({ currentUser }) => {
-// //   const [messages, setMessages] = useState([]);
-// //   const [acceptedFriends, setAcceptedFriends] = useState([]);
-// //   const [selectedFriend, setSelectedFriend] = useState(null);
-// //   const [sidebarOpen, setSidebarOpen] = useState(false);
-// //   const [chatroomId, setRoomId] = useState(null);
-// //   const [messageInput, setMessageInput] = useState("");
-// //   const [chatChannel, setChatChannel] = useState(null);
-// //   const [loadingMessages, setLoadingMessages] = useState(false);
-// //   const [loadingFriends, setLoadingFriends] = useState(false);
-// //   const [error, setError] = useState(null);
-// //   const [replyingTo, setReplyingTo] = useState(null);
-
-// //   const messagesEndRef = useRef(null);
-
-// //   const formatTimestamp = (timestamp) => {
-// //     const date = new Date(timestamp);
-// //     const now = new Date();
-// //     const hours = date.getHours().toString().padStart(2, "0");
-// //     const minutes = date.getMinutes().toString().padStart(2, "0");
-
-// //     if (now.toDateString() === date.toDateString()) {
-// //       return `Today ${hours}:${minutes}`;
-// //     }
-
-// //     return (
-// //       date.toLocaleDateString([], {
-// //         year: "numeric",
-// //         month: "short",
-// //         day: "numeric",
-// //       }) +
-// //       " " +
-// //       `${hours}:${minutes}`
-// //     );
-// //   };
-
-// //   const groupMessagesByDate = (messages) => {
-// //     const groupedMessages = {};
-// //     messages.forEach((message) => {
-// //       const messageDate = new Date(message.created_at).toDateString();
-// //       if (!groupedMessages[messageDate]) {
-// //         groupedMessages[messageDate] = [];
-// //       }
-// //       groupedMessages[messageDate].push(message);
-// //     });
-// //     return groupedMessages;
-// //   };
-
-// //   const fetchAcceptedFriends = useCallback(async () => {
-// //     if (!currentUser) return;
-
-// //     setLoadingFriends(true);
-// //     setError(null);
-
-// //     try {
-// //       const response = await apiClient.get(
-// //         `/friend_requests/${currentUser.id}/accepted`
-// //       );
-// //       setAcceptedFriends(response.data || []);
-// //     } catch (error) {
-// //       setError("Error fetching accepted friends.");
-// //     } finally {
-// //       setLoadingFriends(false);
-// //     }
-// //   }, [currentUser]);
-
-// //   const initializeChatSubscription = useCallback(
-// //     (roomId) => {
-// //       if (chatChannel) {
-// //         chatChannel.unsubscribe();
-// //       }
-  
-// //       const newChatChannel = createChatSubscription(roomId, {
-// //         received(data) {
-// //           if (data.message) {
-// //             const formattedMessage = {
-// //               ...data.message,
-// //               isSentByCurrentUser: data.message.sender_id === currentUser.id,
-// //               timestamp: formatTimestamp(data.message.created_at),
-// //             };
-  
-// //             setMessages((prevMessages) => [...prevMessages, formattedMessage]);
-  
-// //             // Update latestMessage for the sender
-// //             setAcceptedFriends((prevFriends) =>
-// //               prevFriends.map((friend) =>
-// //                 friend.id === data.message.sender_id
-// //                   ? {
-// //                       ...friend,
-// //                       latestMessage: {
-// //                         content: data.message.content,
-// //                         created_at: data.message.created_at,
-// //                       },
-// //                     }
-// //                   : friend
-// //               )
-// //             );
-// //           }
-// //         },
-// //       });
-  
-// //       setChatChannel(newChatChannel);
-// //     },
-// //     [chatChannel, currentUser.id]
-// //   );
-  
-  
-
-// //   const handleFriendClick = async (friend) => {
-// //     try {
-// //       const response = await apiClient.get(`/chatrooms/check_or_create`, {
-// //         params: { user2_id: friend.id },
-// //       });
-
-// //       if (response.status === 200) {
-// //         const chatroom = response.data;
-// //         setRoomId(chatroom.id);
-// //         setSelectedFriend(friend);
-// //         setMessages([]);
-// //         setSidebarOpen(false);
-// //         initializeChatSubscription(chatroom.id);
-// //       } else {
-// //         setError("Error fetching or creating chatroom.");
-// //       }
-// //     } catch (error) {
-// //       setError("Error handling friend click.");
-// //     }
-// //   };
-
-// //   useEffect(() => {
-// //     if (!chatroomId) return;
-
-// //     const fetchMessages = async () => {
-// //       setLoadingMessages(true);
-// //       setError(null);
-    
-// //       try {
-// //         const response = await apiClient.get(`/chatrooms/${chatroomId}/messages`);
-// //         const formattedMessages = response.data.map((msg) => ({
-// //           ...msg,
-// //           isSentByCurrentUser: msg.user_id === currentUser.id,
-// //           timestamp: formatTimestamp(msg.created_at),
-// //         }));
-        
-// //         setMessages(
-// //           formattedMessages.sort(
-// //             (a, b) => new Date(a.created_at) - new Date(b.created_at)
-// //           )
-// //         );
-    
-// //         // Update latestMessage for each friend
-// //         setAcceptedFriends((prevFriends) =>
-// //           prevFriends.map((friend) => {
-// //             const lastMessage = formattedMessages
-// //               .filter((msg) => msg.user_id === friend.id)
-// //               .pop(); // Get the last message for this friend
-    
-// //             return {
-// //               ...friend,
-// //               latestMessage: lastMessage || friend.latestMessage,
-// //             };
-// //           })
-// //         );
-// //       } catch (error) {
-// //         setError("Error fetching messages.");
-// //       } finally {
-// //         setLoadingMessages(false);
-// //       }
-// //     };
-    
-    
-
-// //     fetchMessages();
-// //   }, [chatroomId, currentUser.id]);
-
-// //   useEffect(() => {
-// //     fetchAcceptedFriends();
-// //   }, [fetchAcceptedFriends]);
-
-// //   useEffect(() => {
-// //     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-// //   }, [messages]);
-
-// //   useEffect(() => {
-// //     return () => {
-// //       if (chatChannel) {
-// //         chatChannel.unsubscribe();
-// //       }
-// //     };
-// //   }, [chatChannel]);
-
-// //   const handleNewUserMessage = () => {
-// //     if (!chatroomId || !messageInput.trim()) return;
-
-// //     if (chatChannel) {
-// //       chatChannel.perform("send_message", {
-// //         chatroom_id: chatroomId,
-// //         content: messageInput,
-// //         sender_id: currentUser.id,
-// //         replying_to: replyingTo ? replyingTo.messageId : null,
-// //       });
-// //       setMessageInput("");
-// //       setReplyingTo(null);
-// //     }
-// //   };
-
-// //   const handleFileUpload = (event) => {
-// //     const file = event.target.files[0];
-// //     if (!file) return;
-
-// //     const reader = new FileReader();
-// //     reader.onloadend = () => {
-// //       if (chatChannel) {
-// //         chatChannel.perform("send_message", {
-// //           chatroom_id: chatroomId,
-// //           content: reader.result,
-// //           file_name: file.name,
-// //           file_type: file.type,
-// //           sender_id: currentUser.id,
-// //           replying_to: replyingTo ? replyingTo.messageId : null,
-// //         });
-// //       }
-// //     };
-// //     reader.readAsDataURL(file);
-// //   };
-
-// //   const groupedMessages = groupMessagesByDate(messages);
-
-// //   return (
-// //     <div className="flex flex-col h-screen bg-gray-100">
-// //       {/* Header for Small Screens */}
-// //       <div className="md:hidden flex justify-between items-center bg-gradient-to-r from-purple-600 to-indigo-600 text-white p-4 shadow-md">
-// //         <button
-// //           className="text-white focus:outline-none"
-// //           onClick={() => setSidebarOpen(!sidebarOpen)}
-// //         >
-// //           <svg
-// //             className="w-6 h-6"
-// //             fill="none"
-// //             stroke="currentColor"
-// //             viewBox="0 0 24 24"
-// //             xmlns="http://www.w3.org/2000/svg"
-// //           >
-// //             <path
-// //               strokeLinecap="round"
-// //               strokeLinejoin="round"
-// //               strokeWidth="2"
-// //               d="M4 6h16M4 12h16m-7 6h7"
-// //             ></path>
-// //           </svg>
-// //         </button>
-// //         <h1 className="text-lg font-semibold">Chat</h1>
-// //       </div>
-
-// //       <div className="flex flex-1 overflow-hidden">
-// //         {/* Sidebar for Friends */}
-// //         <div className="p-4 h-full flex flex-col bg-gray-100">
-// //   <h2 className="text-2xl font-bold mb-4">Friends</h2>
-// //   {loadingFriends && <p>Loading friends...</p>}
-// //   {error && <p className="text-red-500">{error}</p>}
-// //   <div className="flex-1 overflow-y-auto">
-// //     {acceptedFriends.length === 0 && <p>No friends available.</p>}
-// //     {acceptedFriends.map((friend) => (
-// //       <div
-// //         key={friend.id}
-// //         className="flex items-center p-2 mb-2 cursor-pointer hover:bg-gray-200 rounded"
-// //         onClick={() => handleFriendClick(friend)}
-// //       >
-// //         <div className="relative w-12 h-12 rounded-full overflow-hidden bg-gray-300 flex items-center justify-center mr-3">
-// //           {friend.profile_picture ? (
-// //             <img
-// //               src={friend.profile_picture}
-// //               alt={friend.name}
-// //               className="w-full h-full object-cover"
-// //             />
-// //           ) : (
-// //             <span className="text-xl font-bold text-white">
-// //               {friend.name[0]}
-// //             </span>
-// //           )}
-// //         </div>
-// //         <div className="flex-1">
-// //           <p className="font-semibold">{friend.name}</p>
-// //           <p className="text-sm text-gray-500 truncate">
-// //             {friend.latestMessage?.content || "No messages yet"}
-// //           </p>
-// //         </div>
-// //         {friend.latestMessage && (
-// //           <span className="text-xs text-gray-400 ml-2">
-// //             {formatTimestamp(friend.latestMessage.created_at)}
-// //           </span>
-// //         )}
-// //       </div>
-// //     ))}
-// //   </div>
-// // </div>
-
-
-// //         {/* Chat Area */}
-// //         <div className="flex-1 md:ml-80 bg-white flex flex-col">
-// //           {/* Chat Header */}
-// //           <div className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white p-4 shadow-md">
-// //             <h2 className="text-lg font-semibold">
-// //               {selectedFriend ? selectedFriend.name : "Select a friend"}
-// //             </h2>
-// //           </div>
-
-// //           {/* Chat Messages */}
-// //           <div className="flex-1 p-4 overflow-y-auto">
-// //             {loadingMessages && <p>Loading messages...</p>}
-// //             {error && <p className="text-red-500">{error}</p>}
-// //             <div>
-// //               {Object.keys(groupedMessages).map((date) => (
-// //                 <div key={date} className="mb-4">
-// //                   <p className="text-center text-gray-500 font-semibold mb-2">{date}</p>
-// //                   {groupedMessages[date].map((msg) => (
-// //                     <div
-// //                       key={msg.id}
-// //                       className={`flex ${
-// //                         msg.isSentByCurrentUser ? "justify-end" : "justify-start"
-// //                       } mb-2`}
-// //                     >
-// //                       <div
-// //                         className={`p-3 rounded-lg ${
-// //                           msg.isSentByCurrentUser
-// //                             ? "bg-blue-500 text-white"
-// //                             : "bg-gray-200 text-black"
-// //                         }`}
-// //                       >
-// //                         {msg.content}
-// //                         {msg.file_name && (
-// //                           <div className="mt-2">
-// //                             <a
-// //                               href={msg.content}
-// //                               className="text-blue-500 underline"
-// //                               download={msg.file_name}
-// //                             >
-// //                               {msg.file_name}
-// //                             </a>
-// //                           </div>
-// //                         )}
-// //                         <p className="text-xs text-gray-400 mt-1">{msg.timestamp}</p>
-// //                       </div>
-// //                     </div>
-// //                   ))}
-// //                 </div>
-// //               ))}
-// //               <div ref={messagesEndRef} />
-// //             </div>
-// //           </div>
-
-// //           {/* Chat Input */}
-// //           <div className="bg-gray-100 p-4 border-t border-gray-200">
-// //             <input
-// //               type="file"
-// //               onChange={handleFileUpload}
-// //               className="hidden"
-// //               id="fileInput"
-// //             />
-// //             <div className="flex items-center">
-// //               <button
-// //                 className="bg-gray-300 p-2 rounded-full hover:bg-gray-400"
-// //                 onClick={() => document.getElementById("fileInput").click()}
-// //               >
-// //                 <svg
-// //                   className="w-6 h-6 text-gray-600"
-// //                   fill="none"
-// //                   stroke="currentColor"
-// //                   viewBox="0 0 24 24"
-// //                   xmlns="http://www.w3.org/2000/svg"
-// //                 >
-// //                   <path
-// //                     strokeLinecap="round"
-// //                     strokeLinejoin="round"
-// //                     strokeWidth="2"
-// //                     d="M3 12l2-2 4 4 8-8 4 4"
-// //                   ></path>
-// //                 </svg>
-// //               </button>
-// //               <textarea
-// //                 className="flex-1 border border-gray-300 p-2 rounded-lg ml-2"
-// //                 rows="2"
-// //                 value={messageInput}
-// //                 onChange={(e) => setMessageInput(e.target.value)}
-// //               />
-// //               <button
-// //                 className="bg-blue-500 text-white p-2 rounded-lg ml-2 hover:bg-blue-600"
-// //                 onClick={handleNewUserMessage}
-// //               >
-// //                 Send
-// //               </button>
-// //             </div>
-// //           </div>
-// //         </div>
-// //       </div>
-// //     </div>
-// //   );
-// // };
-
-// // export default Chat;
-
-
-// // import React, { useEffect, useState, useRef, useCallback } from "react";
-// // import apiClient from "../services/apiService"; // Adjust path as needed
-// // import { createChatSubscription } from "../actionCableConsumer"; // Adjust path as needed
-// // import './Chat.css';
-
-// // const Chat = ({ currentUser }) => {
-// //   const [messages, setMessages] = useState([]);
-// //   const [acceptedFriends, setAcceptedFriends] = useState([]);
-// //   const [selectedFriend, setSelectedFriend] = useState(null);
-// //   const [sidebarOpen, setSidebarOpen] = useState(false);
-// //   const [chatroomId, setChatroomId] = useState(null);
-// //   const [messageInput, setMessageInput] = useState("");
-// //   const [chatChannel, setChatChannel] = useState(null);
-// //   const [loadingMessages, setLoadingMessages] = useState(false);
-// //   const [loadingFriends, setLoadingFriends] = useState(false);
-// //   const [error, setError] = useState(null);
-// //   const [replyingTo, setReplyingTo] = useState(null);
-
-// //   const messagesEndRef = useRef(null);
-
-// //   const formatTimestamp = (timestamp) => {
-// //     const date = new Date(timestamp);
-// //     const now = new Date();
-// //     const hours = date.getHours().toString().padStart(2, "0");
-// //     const minutes = date.getMinutes().toString().padStart(2, "0");
-
-// //     if (now.toDateString() === date.toDateString()) {
-// //       return `Today ${hours}:${minutes}`;
-// //     }
-
-// //     return (
-// //       date.toLocaleDateString([], {
-// //         year: "numeric",
-// //         month: "short",
-// //         day: "numeric",
-// //       }) +
-// //       " " +
-// //       `${hours}:${minutes}`
-// //     );
-// //   };
-
-// //   const groupMessagesByDate = (messages) => {
-// //     const groupedMessages = {};
-// //     messages.forEach((message) => {
-// //       const messageDate = new Date(message.created_at).toDateString();
-// //       if (!groupedMessages[messageDate]) {
-// //         groupedMessages[messageDate] = [];
-// //       }
-// //       groupedMessages[messageDate].push(message);
-// //     });
-// //     return groupedMessages;
-// //   };
-
-// //   const fetchAcceptedFriends = useCallback(async () => {
-// //     if (!currentUser) return;
-
-// //     setLoadingFriends(true);
-// //     setError(null);
-
-// //     try {
-// //       const response = await apiClient.get(`/friend_requests/${currentUser.id}/accepted`);
-// //       setAcceptedFriends(response.data || []);
-// //     } catch (error) {
-// //       setError("Error fetching accepted friends.");
-// //     } finally {
-// //       setLoadingFriends(false);
-// //     }
-// //   }, [currentUser]);
-
-// //   const initializeChatSubscription = useCallback(
-// //     (roomId) => {
-// //       if (chatChannel) {
-// //         chatChannel.unsubscribe();
-// //       }
-
-// //       const newChatChannel = createChatSubscription(roomId, {
-// //         received(data) {
-// //           if (data.message) {
-// //             const formattedMessage = {
-// //               ...data.message,
-// //               isSentByCurrentUser: data.message.sender_id === currentUser.id,
-// //               timestamp: formatTimestamp(data.message.created_at),
-// //             };
-
-// //             setMessages((prevMessages) => [...prevMessages, formattedMessage]);
-
-// //             // Update latestMessage for the sender
-// //             setAcceptedFriends((prevFriends) =>
-// //               prevFriends.map((friend) =>
-// //                 friend.id === data.message.sender_id
-// //                   ? {
-// //                       ...friend,
-// //                       latestMessage: {
-// //                         content: data.message.content,
-// //                         created_at: data.message.created_at,
-// //                       },
-// //                     }
-// //                   : friend
-// //               )
-// //             );
-// //           }
-// //         },
-// //       });
-
-// //       setChatChannel(newChatChannel);
-// //     },
-// //     [chatChannel, currentUser.id]
-// //   );
-
-// //   const handleFriendClick = async (friend) => {
-// //     try {
-// //       const response = await apiClient.get(`/chatrooms/check_or_create`, {
-// //         params: { user2_id: friend.id },
-// //       });
-
-// //       if (response.status === 200) {
-// //         const chatroom = response.data;
-// //         setChatroomId(chatroom.id);
-// //         setSelectedFriend(friend);
-// //         setMessages([]);
-// //         setSidebarOpen(false);
-// //         initializeChatSubscription(chatroom.id);
-// //       } else {
-// //         setError("Error fetching or creating chatroom.");
-// //       }
-// //     } catch (error) {
-// //       setError("Error handling friend click.");
-// //     }
-// //   };
-
-// //   useEffect(() => {
-// //     if (!chatroomId) return;
-
-// //     const fetchMessages = async () => {
-// //       setLoadingMessages(true);
-// //       setError(null);
-
-// //       try {
-// //         const response = await apiClient.get(`/chatrooms/${chatroomId}/messages`);
-// //         const formattedMessages = response.data.map((msg) => ({
-// //           ...msg,
-// //           isSentByCurrentUser: msg.user_id === currentUser.id,
-// //           timestamp: formatTimestamp(msg.created_at),
-// //         }));
-
-// //         setMessages(
-// //           formattedMessages.sort(
-// //             (a, b) => new Date(a.created_at) - new Date(b.created_at)
-// //           )
-// //         );
-
-// //         // Update latestMessage for each friend
-// //         setAcceptedFriends((prevFriends) =>
-// //           prevFriends.map((friend) => {
-// //             const lastMessage = formattedMessages
-// //               .filter((msg) => msg.user_id === friend.id)
-// //               .pop(); // Get the last message for this friend
-
-// //             return {
-// //               ...friend,
-// //               latestMessage: lastMessage || friend.latestMessage,
-// //             };
-// //           })
-// //         );
-// //       } catch (error) {
-// //         setError("Error fetching messages.");
-// //       } finally {
-// //         setLoadingMessages(false);
-// //       }
-// //     };
-
-// //     fetchMessages();
-// //   }, [chatroomId, currentUser.id]);
-
-// //   useEffect(() => {
-// //     fetchAcceptedFriends();
-// //   }, [fetchAcceptedFriends]);
-
-// //   useEffect(() => {
-// //     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-// //   }, [messages]);
-
-// //   useEffect(() => {
-// //     return () => {
-// //       if (chatChannel) {
-// //         chatChannel.unsubscribe();
-// //       }
-// //     };
-// //   }, [chatChannel]);
-
-// //   const handleNewUserMessage = () => {
-// //     if (!chatroomId || !messageInput.trim()) return;
-
-// //     if (chatChannel) {
-// //       chatChannel.perform("send_message", {
-// //         chatroom_id: chatroomId,
-// //         content: messageInput,
-// //         sender_id: currentUser.id,
-// //         replying_to: replyingTo ? replyingTo.messageId : null,
-// //       });
-// //       setMessageInput("");
-// //       setReplyingTo(null);
-// //     }
-// //   };
-
-// //   const handleFileUpload = (event) => {
-// //     const file = event.target.files[0];
-// //     if (!file) return;
-
-// //     const reader = new FileReader();
-// //     reader.onloadend = () => {
-// //       if (chatChannel) {
-// //         chatChannel.perform("send_message", {
-// //           chatroom_id: chatroomId,
-// //           content: reader.result,
-// //           file_name: file.name,
-// //           file_type: file.type,
-// //           sender_id: currentUser.id,
-// //           replying_to: replyingTo ? replyingTo.messageId : null,
-// //         });
-// //       }
-// //     };
-// //     reader.readAsDataURL(file);
-// //   };
-
-// //   const groupedMessages = groupMessagesByDate(messages);
-
-// //   return (
-// //     <div className="flex h-screen bg-gray-100">
-// //       {/* Sidebar for Friends */}
-// //       <div
-// //         className={`fixed inset-y-0 left-0 w-64 bg-gray-200 p-4 transition-transform transform ${
-// //           sidebarOpen ? "translate-x-0" : "-translate-x-full"
-// //         } md:translate-x-0 md:relative md:w-80 shadow-lg z-20`}
-// //       >
-// //         <div className="flex justify-between items-center mb-4">
-// //           <h2 className="text-2xl font-bold">Friends</h2>
-// //           <button
-// //             className="text-gray-600 md:hidden"
-// //             onClick={() => setSidebarOpen(false)}
-// //           >
-// //             <svg
-// //               className="w-6 h-6"
-// //               fill="none"
-// //               stroke="currentColor"
-// //               viewBox="0 0 24 24"
-// //               xmlns="http://www.w3.org/2000/svg"
-// //             >
-// //               <path
-// //                 strokeLinecap="round"
-// //                 strokeLinejoin="round"
-// //                 strokeWidth="2"
-// //                 d="M6 18L18 6M6 6l12 12"
-// //               ></path>
-// //             </svg>
-// //           </button>
-// //         </div>
-// //         {loadingFriends && <p>Loading friends...</p>}
-// //         {error && <p className="text-red-500">{error}</p>}
-// //         <div className="flex-1 overflow-y-auto">
-// //           {acceptedFriends.length === 0 && <p>No friends available.</p>}
-// //           {acceptedFriends.map((friend) => (
-// //             <div
-// //               key={friend.id}
-// //               className="flex items-center p-2 mb-2 cursor-pointer hover:bg-gray-300 rounded"
-// //               onClick={() => handleFriendClick(friend)}
-// //             >
-// //               <div className="relative w-12 h-12 rounded-full overflow-hidden bg-gray-300 flex items-center justify-center mr-3">
-// //                 {friend.profile_picture ? (
-// //                   <img
-// //                     src={friend.profile_picture}
-// //                     alt={friend.name}
-// //                     className="w-full h-full object-cover"
-// //                   />
-// //                 ) : (
-// //                   <span className="text-xl font-bold text-white">
-// //                     {friend.name[0]}
-// //                   </span>
-// //                 )}
-// //                 {friend.latestMessage && (
-// //                   <span className="absolute bottom-1 right-1 text-sm text-gray-500">
-// //                     {formatTimestamp(friend.latestMessage.created_at)}
-// //                   </span>
-// //                 )}
-// //               </div>
-// //               <div className="flex-1">
-// //                 <div className="flex justify-between items-center mb-1">
-// //                   <h3 className="text-lg font-semibold">{friend.name}</h3>
-// //                   {friend.latestMessage && (
-// //                     <span className="text-sm text-gray-500">
-// //                       {formatTimestamp(friend.latestMessage.created_at)}
-// //                     </span>
-// //                   )}
-// //                 </div>
-// //                 <p className="text-gray-700 truncate">
-// //                   {friend.latestMessage ? friend.latestMessage.content : "No messages"}
-// //                 </p>
-// //               </div>
-// //             </div>
-// //           ))}
-// //         </div>
-// //       </div>
-
-// //       {/* Main Chat Area */}
-// //       <div
-// //         className={`flex-1 transition-transform duration-300 ${
-// //           sidebarOpen ? "ml-64 md:ml-80" : "ml-0 md:ml-80"
-// //         }`}
-// //       >
-// //         <div className="flex-1 p-4 overflow-y-auto bg-white">
-// //           {selectedFriend ? (
-// //             <>
-// //               <div className="flex flex-col-reverse">
-// //                 {Object.entries(groupedMessages).map(([date, msgs]) => (
-// //                   <div key={date} className="mb-4">
-// //                     <div className="text-center text-gray-500 mb-2">{date}</div>
-// //                     {msgs.map((msg) => (
-// //                       <div
-// //                         key={msg.id}
-// //                         className={`flex ${
-// //                           msg.isSentByCurrentUser ? "justify-end" : "justify-start"
-// //                         } mb-2`}
-// //                       >
-// //                         <div
-// //                           className={`p-2 rounded-lg max-w-xs ${
-// //                             msg.isSentByCurrentUser
-// //                               ? "bg-blue-500 text-white"
-// //                               : "bg-gray-300 text-black"
-// //                           }`}
-// //                         >
-// //                           {msg.content}
-// //                           {msg.file_name && (
-// //                             <div className="mt-2 text-sm text-gray-700">
-// //                               <a
-// //                                 href={msg.content}
-// //                                 download={msg.file_name}
-// //                                 className="hover:underline"
-// //                               >
-// //                                 {msg.file_name}
-// //                               </a>
-// //                             </div>
-// //                           )}
-// //                         </div>
-// //                       </div>
-// //                     ))}
-// //                   </div>
-// //                 ))}
-// //                 <div ref={messagesEndRef} />
-// //               </div>
-// //             </>
-// //           ) : (
-// //             <div className="flex items-center justify-center h-full text-gray-500">
-// //               Select a friend to start chatting
-// //             </div>
-// //           )}
-// //         </div>
-
-// //         {/* Input Area */}
-// //         {selectedFriend && (
-// //           <div className="bg-white p-4 border-t flex items-center">
-// //             <input
-// //               type="file"
-// //               accept="image/*,video/*"
-// //               className="hidden"
-// //               id="fileInput"
-// //               onChange={handleFileUpload}
-// //             />
-// //             <label htmlFor="fileInput" className="cursor-pointer">
-// //               <svg
-// //                 className="w-6 h-6 text-gray-600 hover:text-gray-800"
-// //                 fill="none"
-// //                 stroke="currentColor"
-// //                 viewBox="0 0 24 24"
-// //                 xmlns="http://www.w3.org/2000/svg"
-// //               >
-// //                 <path
-// //                   strokeLinecap="round"
-// //                   strokeLinejoin="round"
-// //                   strokeWidth="2"
-// //                   d="M3 10h14M3 6h14M3 14h14m-7 4h7m-7-8h7m-7 4h7"
-// //                 ></path>
-// //               </svg>
-// //             </label>
-// //             <textarea
-// //               className="flex-1 border rounded-lg p-2 ml-2 resize-none"
-// //               rows="2"
-// //               value={messageInput}
-// //               onChange={(e) => setMessageInput(e.target.value)}
-// //               placeholder="Type your message..."
-// //             />
-// //             <button
-// //               className="bg-blue-500 text-white p-2 rounded-lg ml-2 hover:bg-blue-600"
-// //               onClick={handleNewUserMessage}
-// //             >
-// //               Send
-// //             </button>
-// //           </div>
-// //         )}
-// //       </div>
-
-// //       {/* Sidebar Toggle Button */}
-// //       <button
-// //         className="md:hidden fixed top-4 left-4 bg-gray-800 text-white p-2 rounded-full"
-// //         onClick={() => setSidebarOpen(true)}
-// //       >
-// //         <svg
-// //           className="w-6 h-6"
-// //           fill="none"
-// //           stroke="currentColor"
-// //           viewBox="0 0 24 24"
-// //           xmlns="http://www.w3.org/2000/svg"
-// //         >
-// //           <path
-// //             strokeLinecap="round"
-// //             strokeLinejoin="round"
-// //             strokeWidth="2"
-// //             d="M4 6h16M4 12h16m-7 6h7m-7-8h7m-7 4h7"
-// //           ></path>
-// //         </svg>
-// //       </button>
-// //     </div>
-// //   );
-// // };
-
-// // export default Chat;
-
-
-
-
-
-// import React, { useEffect, useState, useCallback, useRef } from 'react';
-// import apiClient from '../services/apiService'; // Adjust path as needed
-// import { createChatSubscription } from '../actionCableConsumer'; // Adjust path as needed
-
-// const Chat = ({ currentUser }) => {
-//   const [messages, setMessages] = useState([]);
-//   const [acceptedFriends, setAcceptedFriends] = useState([]);
-//   const [selectedFriend, setSelectedFriend] = useState(null);
-//   const [sidebarOpen, setSidebarOpen] = useState(false);
-//   const [chatroomId, setRoomId] = useState(null);
-//   const [messageInput, setMessageInput] = useState('');
-//   const [chatChannel, setChatChannel] = useState(null);
-//   const [loadingMessages, setLoadingMessages] = useState(false);
-//   const [loadingFriends, setLoadingFriends] = useState(false);
-//   const [error, setError] = useState(null);
-//   const messagesEndRef = useRef(null);
-
-//   const fetchAcceptedFriends = useCallback(async () => {
-//     if (!currentUser) return;
-
-//     setLoadingFriends(true);
-//     setError(null);
-
-//     try {
-//       const response = await apiClient.get(`/friend_requests/${currentUser.id}/accepted`);
-//       setAcceptedFriends(response.data || []);
-//     } catch (error) {
-//       setError('Error fetching accepted friends.');
-//       console.error('Error fetching accepted friends:', error.message);
-//     } finally {
-//       setLoadingFriends(false);
-//     }
-//   }, [currentUser]);
-
-//   const initializeChatSubscription = useCallback((roomId) => {
-//     if (chatChannel) {
-//       chatChannel.unsubscribe();
-//     }
-
-//     const newChatChannel = createChatSubscription(roomId, {
-//       received(data) {
-//         setMessages((prevMessages) => [...prevMessages, data.message]);
-//       }
-//     });
-
-//     setChatChannel(newChatChannel);
-//   }, [chatChannel]);
-
-  // const handleFriendClick = async (friend) => {
-  //   try {
-  //     const response = await apiClient.get(`/chatrooms/check_or_create`, {
-  //       params: { user2_id: friend.id },
-  //     });
-
-  //     if (response.status === 200) {
-  //       const chatroom = response.data;
-  //       setRoomId(chatroom.id);
-  //       setSelectedFriend(friend);
-  //       setMessages([]); // Clear messages state when opening a new chatroom
-  //       setSidebarOpen(false);
-
-  //       initializeChatSubscription(chatroom.id);
-  //     } else {
-  //       setError('Error fetching or creating chatroom.');
-  //     }
-  //   } catch (error) {
-  //     setError('Error handling friend click.');
-  //   }
-  // };
-
-  // useEffect(() => {
-  //   if (!chatroomId) return;
-
-  //   const fetchMessages = async () => {
-  //     setLoadingMessages(true);
-  //     setError(null);
-
-  //     try {
-  //       const response = await apiClient.get(`/chatrooms/${chatroomId}/messages`);
-  //       setMessages(response.data || []);
-  //     } catch (error) {
-  //       setError('Error fetching messages.');
-  //     } finally {
-  //       setLoadingMessages(false);
-  //     }
-  //   };
-
-  //   fetchMessages();
-  // }, [chatroomId]);
-
-  // useEffect(() => {
-  //   fetchAcceptedFriends();
-  // }, [fetchAcceptedFriends]);
-
-  // useEffect(() => {
-  //   return () => {
-  //     if (chatChannel) {
-  //       chatChannel.unsubscribe();
-  //     }
-  //   };
-  // }, [chatChannel]);
-
-  // useEffect(() => {
-  //   // Auto-scroll to bottom whenever messages update
-  //   if (messagesEndRef.current) {
-  //     messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
-  //   }
-  // }, [messages]);
-
-//   const handleNewUserMessage = () => {
-//     if (!chatroomId || !messageInput.trim()) return;
-
-//     if (chatChannel) {
-//       chatChannel.perform('send_message', {
-//         chatroom_id: chatroomId,
-//         content: messageInput,
-//         sender_id: currentUser.id
-//       });
-//       setMessageInput('');
-//     } else {
-//       console.error('Chat channel not found');
-//     }
-//   };
-
-//   const handleFileUpload = (event) => {
-//     const file = event.target.files[0];
-//     if (!file) return;
-
-//     const reader = new FileReader();
-//     reader.onloadend = () => {
-//       if (chatChannel) {
-//         chatChannel.perform('send_message', {
-//           chatroom_id: chatroomId,
-//           content: reader.result,
-//           file_name: file.name,
-//           file_type: file.type,
-//           sender_id: currentUser.id,
-//         });
-//       } else {
-//         console.error('Chat channel not found');
-//       }
-//     };
-//     reader.readAsDataURL(file);
-//   };
-
-//   return (
-//     <div className="flex flex-col h-screen bg-gray-100">
-//       {/* Header for Small Screens */}
-//       <div className="md:hidden flex justify-between items-center bg-gradient-to-r from-purple-600 to-indigo-600 text-white p-4 shadow-md">
-//         <button
-//           className="text-white focus:outline-none"
-//           onClick={() => setSidebarOpen(!sidebarOpen)}
-//         >
-//           <svg
-//             className="w-6 h-6"
-//             fill="none"
-//             stroke="currentColor"
-//             viewBox="0 0 24 24"
-//             xmlns="http://www.w3.org/2000/svg"
-//           >
-//             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16m-7 6h7"></path>
-//           </svg>
-//         </button>
-//         <h1 className="text-lg font-semibold">Chat</h1>
-//       </div>
-
-//       <div className="flex flex-1 overflow-hidden">
-//         {/* Sidebar for Friends */}
-//         <div
-//           className={`fixed inset-y-0 left-0 transform ${
-//             sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-//           } md:relative md:translate-x-0 transition-transform duration-300 ease-in-out w-80 bg-gradient-to-r from-purple-600 to-indigo-600 text-white flex flex-col shadow-lg z-50`}
-//         >
-//           <div className="p-4 border-b border-indigo-700 flex items-center justify-between">
-//             <h2 className="text-2xl font-bold">Friends</h2>
-//             <button
-//               className="md:hidden text-white focus:outline-none"
-//               onClick={() => setSidebarOpen(false)}
-//             >
-//               <svg
-//                 className="w-6 h-6"
-//                 fill="none"
-//                 stroke="currentColor"
-//                 viewBox="0 0 24 24"
-//                 xmlns="http://www.w3.org/2000/svg"
-//               >
-//                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
-//               </svg>
-//             </button>
-//           </div>
-//           <div className="p-4 flex-1 overflow-y-auto">
-//             {loadingFriends ? (
-//               <p className="text-center text-gray-400">Loading friends...</p>
-//             ) : (
-//               <ul>
-//                 {acceptedFriends.length > 0 ? (
-//                   acceptedFriends.map((friend) => (
-//                     <li
-//                       key={friend.id}
-//                       className="cursor-pointer p-3 hover:bg-indigo-700 rounded transition duration-300 ease-in-out"
-//                       onClick={() => handleFriendClick(friend)}
-//                     >
-//                       {friend.name}
-//                     </li>
-//                   ))
-//                 ) : (
-//                   <p className="text-center text-gray-400">No friends available.</p>
-//                 )}
-//               </ul>
-//             )}
-//             {error && <p className="text-red-500 text-center mt-2">{error}</p>}
-//           </div>
-//         </div>
-
-//         {/* Chat Area */}
-//         <div className="flex-1 flex flex-col">
-//           {/* Chat Header */}
-//           <div className="hidden md:flex bg-gradient-to-r from-purple-600 to-indigo-600 text-white p-4 shadow-md">
-//             <h1 className="text-lg font-semibold">{selectedFriend ? selectedFriend.name : 'Select a friend'}</h1>
-//           </div>
-
-//           {/* Messages Display */}
-//           <div className="flex-1 p-4 overflow-y-auto bg-white border-t border-gray-200">
-//             {loadingMessages ? (
-//               <p className="text-center text-gray-400">Loading messages...</p>
-//             ) : (
-//               <div className="flex flex-col">
-//                 {messages.length > 0 ? (
-//                   messages.map((msg) => (
-//                     <div
-//                       key={msg.id}
-//                       className={`flex ${
-//                         msg.sender_id === currentUser.id ? 'justify-end' : 'justify-start'
-//                       } mb-2`}
-//                     >
-//                       <div
-//                         className={`flex items-center max-w-xs ${
-//                           msg.sender_id === currentUser.id ? 'flex-row-reverse' : 'flex-row'
-//                         }`}
-//                       >
-//                         {msg.sender_id !== currentUser.id && (
-//                           <div className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center text-gray-600 mr-2">
-//                             {selectedFriend && <span>{selectedFriend.name.charAt(0)}</span>}
-//                           </div>
-//                         )}
-//                         <div
-//                           className={`p-3 rounded-lg ${
-//                             msg.sender_id === currentUser.id
-//                               ? 'bg-indigo-600 text-white'
-//                               : 'bg-gray-300 text-gray-800'
-//                           }`}
-//                         >
-//                           <p>{msg.content}</p>
-//                         </div>
-//                       </div>
-//                     </div>
-//                   ))
-//                 ) : (
-//                   <p className="text-center text-gray-400">No messages yet.</p>
-//                 )}
-//                 <div ref={messagesEndRef} /> {/* Auto-scroll to bottom */}
-//               </div>
-//             )}
-//             {error && <p className="text-red-500 text-center mt-2">{error}</p>}
-//           </div>
-
-//           {/* Message Input */}
-//           <div className="bg-white p-4 border-t border-gray-200">
-//             <input
-//               type="text"
-//               value={messageInput}
-//               onChange={(e) => setMessageInput(e.target.value)}
-//               placeholder="Type a message..."
-//               className="w-full p-2 border border-gray-300 rounded-lg"
-//             />
-//             <button
-//               onClick={handleNewUserMessage}
-//               className="mt-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 focus:outline-none"
-//             >
-//               Send
-//             </button>
-//             <input
-//               type="file"
-//               onChange={handleFileUpload}
-//               className="mt-2"
-//             />
-//           </div>
-//         </div>
-//       </div>
-//     </div>
-//   );
-// };
-
-// export default Chat;
-
-// src/components/Chat.jsx
-
-
-// import React, { useEffect, useState, useCallback } from 'react';
-// import apiClient from '../services/apiService'; // Adjust path as needed
-// import { createChatSubscription } from '../actionCableConsumer'; // Adjust path as needed
-
-// const Chat = ({ currentUser }) => {
-//   const [messages, setMessages] = useState([]);
-//   const [acceptedFriends, setAcceptedFriends] = useState([]);
-//   const [selectedFriend, setSelectedFriend] = useState(null);
-//   const [sidebarOpen, setSidebarOpen] = useState(false);
-//   const [chatroomId, setRoomId] = useState(null);
-//   const [messageInput, setMessageInput] = useState('');
-//   const [chatChannel, setChatChannel] = useState(null);
-//   const [loadingMessages, setLoadingMessages] = useState(false);
-//   const [loadingFriends, setLoadingFriends] = useState(false);
-//   const [error, setError] = useState(null);
-
-//   const fetchAcceptedFriends = useCallback(async () => {
-//     if (!currentUser) return;
-
-//     setLoadingFriends(true);
-//     setError(null);
-
-//     try {
-//       const response = await apiClient.get(`/friend_requests/${currentUser.id}/accepted`);
-//       console.log('Accepted friends:', response.data);
-//       setAcceptedFriends(response.data || []);
-//     } catch (error) {
-//       setError('Error fetching accepted friends.');
-//       console.error('Error fetching accepted friends:', error.message);
-//     } finally {
-//       setLoadingFriends(false);
-//     }
-//   }, [currentUser]);
-
-//   const initializeChatSubscription = useCallback((roomId) => {
-//     if (chatChannel) {
-//       chatChannel.unsubscribe();
-//     }
-
-//     const newChatChannel = createChatSubscription(roomId, {
-//       received(data) {
-//         console.log('Received message:', data);
-//         setMessages((prevMessages) => [...prevMessages, data.message]);
-//         if (Notification.permission === 'granted') {
-//           new Notification('New message', { body: data.message.content });
-//         }
-//       }
-//     });
-
-//     console.log('New chat channel:', newChatChannel);
-//     setChatChannel(newChatChannel);
-//   }, [chatChannel]);
-
-//   const handleFriendClick = async (friend) => {
-//     try {
-//       const response = await apiClient.get(`/chatrooms/check_or_create`, {
-//         params: { user2_id: friend.id },
-//       });
-
-//       if (response.status === 200) {
-//         const chatroom = response.data;
-//         console.log('Chatroom data:', chatroom);
-//         setRoomId(chatroom.id);
-//         setSelectedFriend(friend);
-//         setMessages([]); // Clear messages state when opening a new chatroom
-//         setSidebarOpen(false);
-
-//         initializeChatSubscription(chatroom.id);
-//       } else {
-//         setError('Error fetching or creating chatroom.');
-//       }
-//     } catch (error) {
-//       setError('Error handling friend click.');
-//       console.error('Error handling friend click:', error.message);
-//     }
-//   };
-
-//   useEffect(() => {
-//     if (!chatroomId) return;
-
-//     const fetchMessages = async () => {
-//       setLoadingMessages(true);
-//       setError(null);
-
-//       try {
-//         const response = await apiClient.get(`/chatrooms/${chatroomId}/messages`);
-//         console.log('Fetched messages:', response.data);
-//         setMessages(response.data || []);
-//       } catch (error) {
-//         setError('Error fetching messages.');
-//         console.error('Error fetching messages:', error.message);
-//       } finally {
-//         setLoadingMessages(false);
-//       }
-//     };
-
-//     fetchMessages();
-//   }, [chatroomId]);
-
-//   useEffect(() => {
-//     fetchAcceptedFriends();
-//   }, [fetchAcceptedFriends]);
-
-//   useEffect(() => {
-//     return () => {
-//       if (chatChannel) {
-//         chatChannel.unsubscribe();
-//       }
-//     };
-//   }, [chatChannel]);
-
-//   const handleNewUserMessage = () => {
-//     if (!chatroomId || !messageInput.trim()) return;
-
-//     if (chatChannel) {
-//       console.log('Sending message:', {
-//         chatroom_id: chatroomId,
-//         content: messageInput,
-//         sender_id: currentUser.id
-//       });
-//       chatChannel.perform('send_message', {
-//         chatroom_id: chatroomId,
-//         content: messageInput,
-//         sender_id: currentUser.id
-//       });
-//       setMessageInput('');
-//     } else {
-//       console.error('Chat channel not found');
-//     }
-//   };
-
-//   const handleFileUpload = (event) => {
-//     const file = event.target.files[0];
-//     if (!file) return;
-
-//     const reader = new FileReader();
-//     reader.onloadend = () => {
-//       console.log('File content:', reader.result);
-//       if (chatChannel) {
-//         chatChannel.perform('send_message', {
-//           chatroom_id: chatroomId,
-//           content: reader.result,
-//           file_name: file.name,
-//           file_type: file.type,
-//           sender_id: currentUser.id,
-//         });
-//       } else {
-//         console.error('Chat channel not found');
-//       }
-//     };
-//     reader.readAsDataURL(file);
-//   };
-
-//   return (
-//     <div className="flex flex-col h-screen bg-gray-100">
-//       {/* Header for Small Screens */}
-//       <div className="md:hidden flex justify-between items-center bg-gradient-to-r from-purple-600 to-indigo-600 text-white p-4 shadow-md">
-//         <button
-//           className="text-white focus:outline-none"
-//           onClick={() => setSidebarOpen(!sidebarOpen)}
-//         >
-//           <svg
-//             className="w-6 h-6"
-//             fill="none"
-//             stroke="currentColor"
-//             viewBox="0 0 24 24"
-//             xmlns="http://www.w3.org/2000/svg"
-//           >
-//             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16m-7 6h7"></path>
-//           </svg>
-//         </button>
-//         <h1 className="text-lg font-semibold">Chat</h1>
-//       </div>
-
-//       <div className="flex flex-1 overflow-hidden">
-//         {/* Sidebar for Friends */}
-//         <div
-//           className={`fixed inset-y-0 left-0 transform ${
-//             sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-//           } md:relative md:translate-x-0 transition-transform duration-300 ease-in-out w-80 bg-gradient-to-r from-purple-600 to-indigo-600 text-white flex flex-col shadow-lg z-50`}
-//         >
-//           <div className="p-4 border-b border-indigo-700 flex items-center justify-between">
-//             <h2 className="text-2xl font-bold">Friends</h2>
-//             <button
-//               className="md:hidden text-white focus:outline-none"
-//               onClick={() => setSidebarOpen(false)}
-//             >
-//               <svg
-//                 className="w-6 h-6"
-//                 fill="none"
-//                 stroke="currentColor"
-//                 viewBox="0 0 24 24"
-//                 xmlns="http://www.w3.org/2000/svg"
-//               >
-//                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
-//               </svg>
-//             </button>
-//           </div>
-//           <div className="p-4 flex-1 overflow-y-auto">
-//             {loadingFriends ? (
-//               <p className="text-center text-gray-400">Loading friends...</p>
-//             ) : (
-//               <ul>
-//                 {acceptedFriends.length > 0 ? (
-//                   acceptedFriends.map((friend) => (
-//                     <li
-//                       key={friend.id}
-//                       className="cursor-pointer p-3 hover:bg-indigo-700 rounded transition duration-300 ease-in-out"
-//                       onClick={() => handleFriendClick(friend)}
-//                     >
-//                       {friend.name}
-//                     </li>
-//                   ))
-//                 ) : (
-//                   <p className="text-center text-gray-400">No friends available.</p>
-//                 )}
-//               </ul>
-//             )}
-//             {error && <p className="text-red-500 text-center mt-2">{error}</p>}
-//           </div>
-//         </div>
-
-//         {/* Chat Area */}
-//         <div className="flex-1 flex flex-col">
-//           {/* Chat Header */}
-//           <div className="hidden md:flex bg-gradient-to-r from-purple-600 to-indigo-600 text-white p-4 shadow-md">
-//             <h1 className="text-lg font-semibold">{selectedFriend ? selectedFriend.name : 'Select a friend'}</h1>
-//           </div>
-
-//           {/* Messages Display */}
-//           <div className="flex-1 p-4 overflow-y-auto">
-//             {loadingMessages ? (
-//               <p className="text-center text-gray-400">Loading messages...</p>
-//             ) : (
-//               <div>
-//                 {messages.length > 0 ? (
-//                   messages.map((msg) => {
-//                     const isCurrentUser = msg.sender_id === currentUser.id;
-//                     return (
-//                       <div
-//                         key={msg.id}
-//                         className={`flex ${
-//                           isCurrentUser ? 'justify-end' : 'justify-start'
-//                         } mb-4`}
-//                       >
-//                         <div
-//                           className={`px-4 py-2 rounded-lg ${
-//                             isCurrentUser ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'
-//                           }`}
-//                         >
-//                           {msg.content}
-//                         </div>
-//                       </div>
-//                     );
-//                   })
-//                 ) : (
-//                   <p className="text-center text-gray-400">No messages yet.</p>
-//                 )}
-//                 {error && <p className="text-red-500 text-center mt-2">{error}</p>}
-//               </div>
-//             )}
-//           </div>
-
-//           {/* Message Input */}
-//           <div className="p-4 border-t border-gray-300 bg-white">
-//             <input
-//               type="file"
-//               onChange={handleFileUpload}
-//               className="block mb-2 text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-500 file:text-white hover:file:bg-indigo-600"
-//             />
-//             <div className="flex items-center">
-//               <input
-//                 type="text"
-//                 value={messageInput}
-//                 onChange={(e) => setMessageInput(e.target.value)}
-//                 placeholder="Type a message..."
-//                 className="flex-1 px-4 py-2 border border-gray-300 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-//               />
-//               <button
-//                 onClick={handleNewUserMessage}
-//                 className="px-4 py-2 bg-indigo-500 text-white rounded-r-lg hover:bg-indigo-600 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-//               >
-//                 Send
-//               </button>
-//             </div>
-//           </div>
-//         </div>
-//       </div>
-//     </div>
-//   );
-// };
-
-// export default Chat;
