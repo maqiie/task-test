@@ -39,7 +39,7 @@ const formatTimestamp = (createdAt) => {
 
   try {
     const date = new Date(createdAt);
-    console.log("Parsing date:", createdAt, "->", date);
+    // console.log("Parsing date:", createdAt, "->", date);
 
     if (isNaN(date.getTime())) {
       throw new Error("Invalid date");
@@ -153,6 +153,7 @@ const Sidebar = ({ open, friends, onFriendClick, onClose }) => {
   );
 };
 
+
 const MessageList = ({ messages, currentUser }) => {
   // Group messages by date
   const groupedMessages = messages
@@ -181,10 +182,10 @@ const MessageList = ({ messages, currentUser }) => {
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-8">
       {Object.keys(groupedMessages).map((date) => (
         <div key={date}>
-          <p className="text-center text-gray-500 mb-4 text-sm font-semibold">
+          <p className="text-center text-gray-400 mb-8 text-xs font-semibold">
             {renderDateLabel(date)}
           </p>
           {groupedMessages[date].map((message) => {
@@ -192,30 +193,50 @@ const MessageList = ({ messages, currentUser }) => {
             return (
               <div
                 key={message.id}
-                className={`flex mb-3 ${
+                className={`flex items-end ${
                   isSentByCurrentUser ? "justify-end" : "justify-start"
-                }`}
+                } mb-4`}
               >
-                <div
-                  className={`relative max-w-xs md:max-w-md p-4 rounded-lg shadow-lg ${
-                    isSentByCurrentUser
-                      ? "bg-indigo-600 text-white"
-                      : "bg-gray-200 text-black"
-                  } ${
-                    isSentByCurrentUser ? "ml-2" : "mr-2"
-                  } transition-transform transform hover:scale-105`}
-                >
-                  <p className="mb-1">{message.content}</p>
-                  <span
-                    className={`absolute text-xs ${
+                {!isSentByCurrentUser && (
+                  <div className="mr-2">
+                    {/* Placeholder for user avatar */}
+                    <div className="w-8 h-8 rounded-full bg-gray-400"></div>
+                  </div>
+                )}
+                <div className="relative max-w-xs md:max-w-md">
+                  <div
+                    className={`p-4 rounded-2xl shadow-md transition-transform transform hover:scale-105 ${
                       isSentByCurrentUser
-                        ? "right-2 bottom-1"
-                        : "left-2 bottom-1"
+                        ? "bg-blue-500 text-white rounded-br-none"
+                        : "bg-gray-200 text-black rounded-bl-none"
                     }`}
                   >
-                    {moment(message.created_at).format("h:mm A")}
-                  </span>
+                    <p className="text-sm mb-3">{message.content}</p>
+                    <span
+                      className={`block text-xs ${
+                        isSentByCurrentUser
+                          ? "text-gray-200 text-right"
+                          : "text-gray-600 text-left"
+                      }`}
+                    >
+                      {moment(message.created_at).format("h:mm A")}
+                    </span>
+                  </div>
+                  <div
+                    className={`absolute w-0 h-0 border-t-8 ${
+                      isSentByCurrentUser
+                        ? "border-l-8 border-t-transparent border-l-blue-500 right-0 -mr-2"
+                        : "border-r-8 border-t-transparent border-r-gray-200 left-0 -ml-2"
+                    }`}
+                    style={{ top: "50%", transform: "translateY(-50%)" }}
+                  />
                 </div>
+                {isSentByCurrentUser && (
+                  <div className="ml-2">
+                    {/* Placeholder for user avatar */}
+                    <div className="w-8 h-8 rounded-full bg-gray-400"></div>
+                  </div>
+                )}
               </div>
             );
           })}
