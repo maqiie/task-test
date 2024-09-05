@@ -9,11 +9,8 @@ import axios from "axios";
 import "./Home.css";
 import { useNavigate } from "react-router-dom";
 import apiClient from "../services/apiService";
-import { UserCircleIcon } from '@heroicons/react/outline'; // Importing the UserCircleIcon from Heroicons
-import { BellIcon } from '@heroicons/react/outline'; // or '@heroicons/react/20/solid' based on your style preference
-
-
-
+import { UserCircleIcon } from "@heroicons/react/outline"; // Importing the UserCircleIcon from Heroicons
+import { BellIcon } from "@heroicons/react/outline"; // or '@heroicons/react/20/solid' based on your style preference
 
 const Home = ({ currentUser }) => {
   const [selectedTask, setSelectedTask] = useState(null);
@@ -51,7 +48,7 @@ const Home = ({ currentUser }) => {
     const fetchUnreadMessages = async () => {
       if (currentUser) {
         try {
-          const response = await apiClient.get('/messages/unread-count');
+          const response = await apiClient.get("/messages/unread-count");
           setUnreadMessages(response.data.count); // Adjust based on your API response
         } catch (error) {
           console.error("Error fetching unread messages count:", error);
@@ -61,7 +58,6 @@ const Home = ({ currentUser }) => {
 
     fetchUnreadMessages();
   }, [currentUser]);
- 
 
   const fetchTasks = useCallback(async () => {
     try {
@@ -79,8 +75,6 @@ const Home = ({ currentUser }) => {
     fetchTasks();
   }, [fetchTasks]);
 
-  
-
   const fetchCompletedTasks = async () => {
     try {
       const response = await apiClient.get("/reminders");
@@ -95,7 +89,6 @@ const Home = ({ currentUser }) => {
     }
   };
 
-  
   const fetchSpecialEvents = async () => {
     try {
       const response = await apiClient.get("/reminders");
@@ -243,8 +236,6 @@ const Home = ({ currentUser }) => {
     console.log("Time remaining for current task:", timeRemaining);
   }
 
-
-
   const handleCompleteTask = async (reminderId) => {
     try {
       await apiClient.patch(`/reminders/${reminderId}/complete`, {
@@ -291,7 +282,6 @@ const Home = ({ currentUser }) => {
     setShowPopup(false);
   };
 
-
   const handleDeleteClick = async (reminderId) => {
     try {
       await apiClient.delete(`/reminders/${reminderId}`);
@@ -314,41 +304,47 @@ const Home = ({ currentUser }) => {
     setSpecialEvents([...specialEvents, newEvent]);
   };
   const handleReschedule = (task) => {
-    navigate('/create', { state: { taskToReschedule: task } });
+    navigate("/create", { state: { taskToReschedule: task } });
   };
 
   return (
     <div className="w-full px-4 py-8 bg-white rounded-lg shadow-lg mb-8">
+      <nav className="fixed top-0 left-0 right-0 z-50 mb-2 bg-white shadow-md">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-end h-16 items-center space-x-4">
+            {/* Profile Picture */}
+            <Link
+              to="/profile"
+              className="flex items-center"
+              aria-label="Profile"
+            >
+              {currentUser && currentUser.profilePicture ? (
+                <img
+                  src={currentUser.profilePicture}
+                  alt="User Profile"
+                  className="h-8 w-8 rounded-full object-cover"
+                />
+              ) : (
+                <UserCircleIcon className="h-8 w-8 text-gray-500 hover:text-gray-700 transition duration-150 ease-in-out transform hover:scale-110 focus:outline-none" />
+              )}
+            </Link>
 
-
-<nav className="fixed top-0 left-0 right-0 z-50 mb-2 bg-white shadow-md">
-  <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-    <div className="flex justify-end h-16 items-center space-x-4">
-      {/* Profile Picture */}
-      <Link to="/profile" className="flex items-center" aria-label="Profile">
-        {currentUser && currentUser.profilePicture ? (
-          <img
-            src={currentUser.profilePicture}
-            alt="User Profile"
-            className="h-8 w-8 rounded-full object-cover"
-          />
-        ) : (
-          <UserCircleIcon className="h-8 w-8 text-gray-500 hover:text-gray-700 transition duration-150 ease-in-out transform hover:scale-110 focus:outline-none" />
-        )}
-      </Link>
-
-      {/* Bell Icon with Unread Count */}
-      <Link to="/chat" className="relative flex items-center" aria-label="Chats">
-        <BellIcon className="h-8 w-8 text-gray-500 hover:text-gray-700 transition duration-150 ease-in-out transform hover:scale-110 focus:outline-none" />
-        {unreadMessages > 0 && (
-          <span className="absolute top-0 right-0 inline-flex items-center justify-center w-4 h-4 text-xs font-bold text-white bg-red-500 rounded-full">
-            {unreadMessages}
-          </span>
-        )}
-      </Link>
-    </div>
-  </div>
-</nav>
+            {/* Bell Icon with Unread Count */}
+            <Link
+              to="/chat"
+              className="relative flex items-center"
+              aria-label="Chats"
+            >
+              <BellIcon className="h-8 w-8 text-gray-500 hover:text-gray-700 transition duration-150 ease-in-out transform hover:scale-110 focus:outline-none" />
+              {unreadMessages > 0 && (
+                <span className="absolute top-0 right-0 inline-flex items-center justify-center w-4 h-4 text-xs font-bold text-white bg-red-500 rounded-full">
+                  {unreadMessages}
+                </span>
+              )}
+            </Link>
+          </div>
+        </div>
+      </nav>
 
       <div className="w-full px-4 py-8 bg-white rounded-lg shadow-lg mb-8">
         {currentTask ? (
@@ -582,15 +578,14 @@ const Home = ({ currentUser }) => {
             Calendar
           </h2>
           <div className="calendar-grid bg-gradient-to-r from-purple-600 to-indigo-600 rounded-lg p-4 shadow-md xl:w-3/4 mx-auto">
-          <Calendar
-  className="bg-white rounded-lg shadow-md"
-  tileClassName="p-2 text-center"
-  next2Label={null}
-  prev2Label={null}
-  nextLabel={<span className="text-blue-500">→</span>}
-  prevLabel={<span className="text-blue-500">←</span>}
-/>
-
+            <Calendar
+              className="bg-white rounded-lg shadow-md"
+              tileClassName="p-2 text-center"
+              next2Label={null}
+              prev2Label={null}
+              nextLabel={<span className="text-blue-500">→</span>}
+              prevLabel={<span className="text-blue-500">←</span>}
+            />
           </div>
 
           {tasks
@@ -647,30 +642,30 @@ const Home = ({ currentUser }) => {
           </h2>
 
           <div className="space-y-6">
-          <div className="space-y-4">
-        <h3 className="text-lg font-semibold mb-2">Missed Tasks</h3>
-        <ul className="space-y-2">
-          {tasks
-            .filter((task) => new Date(task.due_date) < new Date())
-            .slice(-4)
-            .map((task, index) => (
-              <li
-                key={index}
-                className="bg-red-100 rounded-lg px-4 py-3 shadow-md flex items-center justify-between"
-              >
-                <span className="text-red-600">
-                  You missed the task: {task.title}
-                </span>
-                <button
-                  onClick={() => handleReschedule(task)}
-                  className="text-sm text-gray-600 bg-gray-200 px-4 py-2 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-opacity-50 transition duration-300"
-                >
-                  Reschedule
-                </button>
-              </li>
-            ))}
-        </ul>
-      </div>
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold mb-2">Missed Tasks</h3>
+              <ul className="space-y-2">
+                {tasks
+                  .filter((task) => new Date(task.due_date) < new Date())
+                  .slice(-4)
+                  .map((task, index) => (
+                    <li
+                      key={index}
+                      className="bg-red-100 rounded-lg px-4 py-3 shadow-md flex items-center justify-between"
+                    >
+                      <span className="text-red-600">
+                        You missed the task: {task.title}
+                      </span>
+                      <button
+                        onClick={() => handleReschedule(task)}
+                        className="text-sm text-gray-600 bg-gray-200 px-4 py-2 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-opacity-50 transition duration-300"
+                      >
+                        Reschedule
+                      </button>
+                    </li>
+                  ))}
+              </ul>
+            </div>
 
             <div className="space-y-4">
               <h3 className="text-lg font-semibold mb-2">Completed Tasks</h3>

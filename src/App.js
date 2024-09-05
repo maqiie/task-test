@@ -80,9 +80,9 @@ function App() {
   };
 
   return (
-    <ActionCableProvider url="wss://localhost:3001/cable">
+    <ActionCableProvider url="wss://task-test-backend.onrender.com/cable">
       <Router>
-        {/* <Navbar currentUser={currentUser} onLogout={handleLogout} invitationsCount={invitationsCount} /> */}
+        <Navbar currentUser={currentUser} onLogout={handleLogout} invitationsCount={invitationsCount} />
         <Notifications currentUser={currentUser} />
         {loading ? (
           <Loader />
